@@ -1,0 +1,221 @@
+# 🚀 Comandos para ejecutar en tu VPS
+# IP: 72.62.138.112
+# Dominio: createam.cloud
+
+# ============================================
+# PASO 1: CONECTAR AL VPS
+# ============================================
+
+ssh root@72.62.138.112
+
+# ============================================
+# PASO 2: INSTALAR DEPENDENCIAS BASE
+# ============================================
+
+# Actualizar sistema
+apt update && apt upgrade -y
+
+# Instalar Node.js 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+# Verificar instalación
+node -v
+npm -v
+
+# Instalar PM2
+npm install -g pm2
+
+# Instalar Nginx
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
+
+# Instalar Git
+apt install -y git
+
+# Instalar Certbot para SSL
+apt install -y certbot python3-certbot-nginx
+
+# Crear directorios
+mkdir -p /var/www
+mkdir -p /backup
+
+# Configurar Firewall
+ufw allow 22
+ufw allow 80
+ufw allow 443
+echo "y" | ufw enable
+
+# ============================================
+# PASO 3: SUBIR EL PROYECTO
+# ============================================
+
+# Opción A: Si tienes Git configurado
+cd /var/www
+git clone https://github.com/tu-usuario/createam-platform.git
+cd createam-platform
+
+# Opción B: Si subes por FTP/SFTP
+# - Sube la carpeta completa a /var/www/createam-platform
+# - Luego continúa desde aquí:
+cd /var/www/createam-platform
+
+# ============================================
+# PASO 4: CONFIGURAR EL PROYECTO
+# ============================================
+
+# Instalar dependencias
+npm install --legacy-peer-deps
+
+# Crear archivo .env.local
+nano .env.local
+
+# Pegar este contenido y guardar (Ctrl+X, Y, Enter):
+---
+NEXT_PUBLIC_CENTRAL_FIREBASE_API_KEY=AIzaSyAB2f4yzW_klDJrlNtnyVi387eEHSM_0r8
+NEXT_PUBLIC_CENTRAL_FIREBASE_AUTH_DOMAIN=cyber-catalog.firebaseapp.com
+NEXT_PUBLIC_CENTRAL_FIREBASE_PROJECT_ID=cyber-catalog
+NEXT_PUBLIC_CENTRAL_FIREBASE_STORAGE_BUCKET=cyber-catalog.firebasestorage.app
+NEXT_PUBLIC_CENTRAL_FIREBASE_MESSAGING_SENDER_ID=145571149256
+NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID=1:145571149256:web:6583321f194b2c19323cfd
+NEXT_PUBLIC_PLATFORM_DOMAIN=createam.cloud
+PORT=3000
+---
+
+# Compilar proyecto
+npm run build
+
+# Iniciar con PM2
+pm2 start npm --name "createam-platform" -- start
+pm2 save
+pm2 startup systemd
+# Copiar y ejecutar el comando que aparece
+
+# Verificar que esté corriendo
+pm2 list
+pm2 logs createam-platform
+
+# ============================================
+# PASO 5: CONFIGURAR NGINX
+# ============================================
+
+# Crear configuración para createam.cloud
+nano /etc/nginx/sites-available/createam.cloud
+
+# Pegar este contenido:
+---
+server {
+    listen 80;
+    server_name createam.cloud www.createam.cloud;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+---
+
+# Crear configuración para subdominios (*.createam.cloud)
+nano /etc/nginx/sites-available/tenants.createam.cloud
+
+# Pegar este contenido:
+---
+server {
+    listen 80;
+    server_name *.createam.cloud;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+---
+
+# Activar las configuraciones
+ln -sf /etc/nginx/sites-available/createam.cloud /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/tenants.createam.cloud /etc/nginx/sites-enabled/
+
+# Probar configuración
+nginx -t
+
+# Recargar Nginx
+systemctl reload nginx
+
+# ============================================
+# PASO 6: CONFIGURAR DNS EN HOSTINGER
+# ============================================
+
+# Ir a: https://hpanel.hostinger.com/domains/createam.cloud/dns
+
+# Agregar estos registros:
+# Tipo: A    | Nombre: @   | Valor: 72.62.138.112 | TTL: 14400
+# Tipo: A    | Nombre: www | Valor: 72.62.138.112 | TTL: 14400
+# Tipo: A    | Nombre: *   | Valor: 72.62.138.112 | TTL: 14400
+
+# Esperar 10-30 minutos para que propague
+
+# Verificar DNS
+dig createam.cloud
+nslookup createam.cloud
+
+# ============================================
+# PASO 7: INSTALAR SSL (después de DNS)
+# ============================================
+
+# Instalar SSL para createam.cloud
+certbot --nginx -d createam.cloud -d www.createam.cloud
+
+# Probar renovación automática
+certbot renew --dry-run
+
+# ============================================
+# PASO 8: VERIFICAR
+# ============================================
+
+# Ver logs
+pm2 logs createam-platform
+
+# Probar desde el servidor
+curl http://localhost:3000
+curl http://72.62.138.112
+
+# Probar en navegador
+# http://createam.cloud (temporal, sin SSL)
+# https://createam.cloud (después de instalar SSL)
+
+# ============================================
+# COMANDOS ÚTILES
+# ============================================
+
+# Ver estado de la aplicación
+pm2 list
+pm2 logs createam-platform
+pm2 restart createam-platform
+pm2 stop createam-platform
+
+# Ver estado de Nginx
+systemctl status nginx
+systemctl restart nginx
+
+# Ver logs de Nginx
+tail -f /var/log/nginx/error.log
+tail -f /var/log/nginx/access.log
+
+# Ver uso de recursos
+htop
+df -h
