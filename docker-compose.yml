@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  app:
+  createam-platform:
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,31 +18,9 @@ services:
       - NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID=${NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID}
       - NEXT_PUBLIC_PLATFORM_DOMAIN=${NEXT_PUBLIC_PLATFORM_DOMAIN}
       - NODE_ENV=production
-    networks:
-      - createam-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  nginx:
-    image: nginx:alpine
-    container_name: createam-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      - app
-    networks:
-      - createam-network
-
-networks:
-  createam-network:
-    driver: bridge
