@@ -1,169 +1,158 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { Eye, MousePointerClick, Package, Plus, ChevronDown } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { centralDb } from '@/lib/firebase';
+import { TenantConfig } from '@/lib/types';
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, FolderTree, TrendingUp, Eye } from "lucide-react";
-import { initTenantFirebase } from "@/lib/firebase";
-import { collection, getDocs, query } from "firebase/firestore";
+const MOCK_METRICS = [
+  { label: "Vistas Totales", value: "3.2k", trend: "+12%", icon: Eye, color: "bg-blue-50 text-blue-600" },
+  { label: "Intención de Compra", value: "145", sub: "Clics WhatsApp", trend: "+8%", icon: MousePointerClick, color: "bg-green-50 text-green-600" },
+  { label: "Prod. Activos", value: "24", trend: "", icon: Package, color: "bg-purple-50 text-purple-600" },
+];
 
 export default function TenantAdminDashboard() {
-  const searchParams = useSearchParams();
-  const domain = searchParams.get('_domain') || 'localhost';
-  
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    totalCategories: 0,
-    loading: true,
-  });
+  const router = useRouter();
+  const { user } = useAuth();
+  const [tenant, setTenant] = useState<TenantConfig | null>(null);
 
   useEffect(() => {
-    async function loadStats() {
+    const loadTenant = async () => {
+      if (!user?.tenantId) return;
+      
       try {
-        // Aquí obtendrías el tenant del contexto o prop
-        // Por ahora simulamos
-        setStats({
-          totalProducts: 0,
-          totalCategories: 0,
-          loading: false,
-        });
+        const tenantDoc = await getDoc(doc(centralDb, 'tenants', user.tenantId));
+        if (tenantDoc.exists()) {
+          setTenant({ id: tenantDoc.id, ...tenantDoc.data() } as TenantConfig);
+        }
       } catch (error) {
-        console.error("Error loading stats:", error);
-        setStats(prev => ({ ...prev, loading: false }));
+        console.error('Error loading tenant:', error);
       }
-    }
+    };
 
-    loadStats();
-  }, [domain]);
+    loadTenant();
+  }, [user]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Resumen de tu tienda
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Productos"
-          value={stats.totalProducts}
-          icon={<Package className="h-4 w-4 text-muted-foreground" />}
-          loading={stats.loading}
-        />
-        <StatCard
-          title="Categorías"
-          value={stats.totalCategories}
-          icon={<FolderTree className="h-4 w-4 text-muted-foreground" />}
-          loading={stats.loading}
-        />
-        <StatCard
-          title="Vistas (Este mes)"
-          value="0"
-          icon={<Eye className="h-4 w-4 text-muted-foreground" />}
-          description="Próximamente"
-        />
-        <StatCard
-          title="Conversiones"
-          value="0"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-          description="Próximamente"
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Acciones Rápidas</CardTitle>
-          <CardDescription>Empieza a configurar tu tienda</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <QuickActionCard
-              title="Agregar Producto"
-              description="Agrega tu primer producto"
-              href="/tenant-admin/products/new"
-            />
-            <QuickActionCard
-              title="Configurar Branding"
-              description="Personaliza logo y colores"
-              href="/tenant-admin/settings"
-            />
-            <QuickActionCard
-              title="Crear Categoría"
-              description="Organiza tus productos"
-              href="/tenant-admin/categories"
-            />
-            <QuickActionCard
-              title="Ver Mi Tienda"
-              description="Revisa cómo se ve tu tienda"
-              href="/"
-              external
-            />
+    <div className="max-w-7xl mx-auto p-5 md:p-10">
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+          <div className="w-full sm:w-auto text-center sm:text-left">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard</h2>
+            <p className="text-gray-500 font-medium text-sm mt-1">Resumen de actividad.</p>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-sm">
+              {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+            </div>
+            <div className="text-left">
+              <span className="block text-xs font-bold text-gray-800">
+                {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
+              </span>
+              <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wide">
+                {user?.role === 'owner' ? 'Propietario' : 'Administrador'}
+              </span>
+            </div>
+            <ChevronDown size={14} className="text-gray-400" />
+          </div>
+        </div>
+
+        {/* Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {MOCK_METRICS.map((metric, i) => (
+            <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-40">
+              <div className="flex justify-between items-start">
+                <div className={`p-3 rounded-2xl ${metric.color} bg-opacity-10`}>
+                  <metric.icon size={20} strokeWidth={2.5} />
+                </div>
+                {metric.trend && (
+                  <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                    {metric.trend}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-900 tracking-tight">{metric.value}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">{metric.label}</p>
+                {metric.sub && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">{metric.sub}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button
+            onClick={() => router.push('/tenant-admin/products/new')}
+            className="bg-gradient-to-br from-gray-900 to-black text-white rounded-[2rem] p-8 relative overflow-hidden group cursor-pointer shadow-xl shadow-gray-200"
+          >
+            <div className="relative z-10 flex justify-between items-center h-full">
+              <div className="text-left">
+                <h3 className="text-xl font-bold mb-1">Crear Producto</h3>
+                <p className="text-gray-400 text-sm">Agrega items al catálogo.</p>
+              </div>
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-white group-hover:text-black transition-all">
+                <Plus size={24} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              const domain = tenant?.domain || 'localhost';
+              window.open(`/store?_domain=${domain}`, '_blank');
+            }}
+            className="bg-white rounded-[2rem] p-8 border border-gray-100 relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all"
+          >
+            <div className="relative z-10 flex justify-between items-center h-full">
+              <div className="text-left">
+                <h3 className="text-xl font-bold mb-1 text-gray-900">Ver Tienda</h3>
+                <p className="text-gray-400 text-sm">Revisa cómo se ve.</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-900 group-hover:scale-110 group-hover:bg-rose-50 group-hover:text-rose-600 transition-all">
+                <Eye size={24} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push('/tenant-admin/categories')}
+            className="bg-white rounded-[2rem] p-8 border border-gray-100 relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all"
+          >
+            <div className="relative z-10 flex justify-between items-center h-full">
+              <div className="text-left">
+                <h3 className="text-xl font-bold mb-1 text-gray-900">Gestionar Categorías</h3>
+                <p className="text-gray-400 text-sm">Organiza tus productos.</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-900 group-hover:scale-110 group-hover:bg-purple-50 group-hover:text-purple-600 transition-all">
+                <Package size={24} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push('/tenant-admin/settings')}
+            className="bg-white rounded-[2rem] p-8 border border-gray-100 relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all"
+          >
+            <div className="relative z-10 flex justify-between items-center h-full">
+              <div className="text-left">
+                <h3 className="text-xl font-bold mb-1 text-gray-900">Configuración</h3>
+                <p className="text-gray-400 text-sm">Personaliza tu marca.</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-900 group-hover:scale-110 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
+                <ChevronDown size={24} />
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
-  );
-}
-
-function StatCard({ 
-  title, 
-  value, 
-  icon, 
-  description, 
-  loading 
-}: { 
-  title: string; 
-  value: string | number; 
-  icon: React.ReactNode; 
-  description?: string;
-  loading?: boolean;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="text-2xl font-bold">...</div>
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function QuickActionCard({
-  title,
-  description,
-  href,
-  external = false,
-}: {
-  title: string;
-  description: string;
-  href: string;
-  external?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noopener noreferrer" : undefined}
-      className="block p-4 border rounded-lg hover:bg-accent transition-colors"
-    >
-      <h4 className="font-semibold mb-1">{title}</h4>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </a>
   );
 }
