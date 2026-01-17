@@ -5,10 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Plus, Pencil, Trash2, Search, MoreHorizontal, MousePointerClick } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { initTenantFirebase } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, deleteDoc, doc, getDoc, doc as firestoreDoc } from "firebase/firestore";
@@ -93,128 +90,90 @@ function ProductsContent() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Productos</h2>
-          <p className="text-muted-foreground">
-            Gestiona el catálogo de tu tienda
-          </p>
+          <h2 className="text-2xl font-black text-gray-900">Inventario</h2>
+          <p className="text-gray-500 font-medium text-sm mt-1">Gestión de stock.</p>
         </div>
         <Link href="/tenant-admin/products/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Producto
-          </Button>
+          <button className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-800 transition-all active:scale-95">
+            <Plus size={18} /> <span className="hidden sm:inline">Nuevo</span>
+          </button>
         </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar productos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8">Cargando productos...</div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                {searchQuery ? "No se encontraron productos" : "Aún no tienes productos"}
-              </p>
-              {!searchQuery && (
-                <Link href="/tenant-admin/products/new">
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Agregar Primer Producto
-                  </Button>
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredProducts.map((product) => (
-                <ProductRow
-                  key={product.id}
-                  product={product}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function ProductRow({ 
-  product, 
-  onDelete 
-}: { 
-  product: Product; 
-  onDelete: (id: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-      <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-        {product.imageUrls && product.imageUrls[0] ? (
-          <img
-            src={product.imageUrls[0]}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-            Sin imagen
-          </div>
-        )}
+      <div className="relative group">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rose-500 transition-colors" size={20} />
+        <input 
+          type="text" 
+          placeholder="Buscar producto..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pl-12 pr-4 text-gray-900 font-semibold placeholder-gray-400 shadow-sm focus:border-rose-200 focus:ring-4 focus:ring-rose-50 outline-none transition-all"
+        />
       </div>
-      
-      <div className="flex-1 min-w-0">
-        <h4 className="font-semibold truncate">{product.name}</h4>
-        {product.description && (
-          <p className="text-sm text-muted-foreground truncate">
-            {product.description}
+
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-rose-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-semibold">Cargando productos...</p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-[2rem] border border-gray-100">
+          <p className="text-gray-400 mb-4 font-medium">
+            {searchQuery ? "No se encontraron productos" : "Aún no tienes productos"}
           </p>
-        )}
-        <div className="flex items-center gap-4 mt-1">
-          <span className="text-sm font-medium text-primary">
-            {formatPrice(product.price)}
-          </span>
-          {product.category && (
-            <span className="text-xs px-2 py-1 bg-secondary rounded-full">
-              {product.category}
-            </span>
+          {!searchQuery && (
+            <Link href="/tenant-admin/products/new">
+              <button className="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition-all">
+                <Plus className="inline mr-2" size={18} />
+                Agregar Primer Producto
+              </button>
+            </Link>
           )}
         </div>
-      </div>
-
-      <div className="flex gap-2">
-        <Link href={`/tenant-admin/products/${product.id}/edit`}>
-          <Button size="sm" variant="outline">
-            <Pencil className="h-4 w-4" />
-          </Button>
-        </Link>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onDelete(product.id)}
-        >
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
-      </div>
+      ) : (
+        <div className="grid gap-3">
+          {filteredProducts.map((product) => (
+            <div key={product.id} className="bg-white p-3 rounded-2xl border border-gray-100 hover:border-rose-100 hover:shadow-md transition-all flex items-center gap-4 group">
+              <div className="w-20 h-20 bg-gray-50 rounded-xl flex-shrink-0 overflow-hidden relative">
+                {product.imageUrls && product.imageUrls.length > 0 ? (
+                  <img src={product.imageUrls[0]} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <MousePointerClick size={24} />
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0 py-1 pr-2">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-base text-gray-900 truncate pr-4">{product.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/tenant-admin/products/${product.id}/edit`}>
+                      <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-900 transition-colors">
+                        <Pencil size={16} />
+                      </button>
+                    </Link>
+                    <button 
+                      onClick={() => handleDelete(product.id)}
+                      className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">{product.category || 'Sin categoría'}</p>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-black text-gray-900">{formatPrice(product.price)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
