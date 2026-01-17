@@ -3,6 +3,8 @@ import { getTenantByDomain } from "@/lib/tenants";
 import { extractDomain } from "@/lib/utils";
 import StoreHome from "@/components/store/StoreHome";
 
+export const dynamic = 'force-dynamic';
+
 interface StorePageProps {
   searchParams: Promise<{ _domain?: string }>;
 }

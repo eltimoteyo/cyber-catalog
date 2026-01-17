@@ -11,8 +11,8 @@ export async function middleware(request: NextRequest) {
   // Dominio de la plataforma principal
   const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || 'createam.cloud';
   
-  // Si es localhost, permitir todo para desarrollo
-  if (domain === 'localhost' || domain.startsWith('127.0.0.1')) {
+  // Si es localhost o IP, permitir todo para desarrollo/testing
+  if (domain === 'localhost' || domain.startsWith('127.0.0.1') || /^\d+\.\d+\.\d+\.\d+$/.test(domain)) {
     return NextResponse.next();
   }
   
