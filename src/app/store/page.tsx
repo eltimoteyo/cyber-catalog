@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTenantByDomain } from "@/lib/tenants";
 import { extractDomain } from "@/lib/utils";
-import StoreHome from "@/components/store/StoreHome";
+import ModernStoreHome from "@/components/store/modern/ModernStoreHome";
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +39,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
     );
   }
 
-  return <StoreHome tenant={tenant} />;
+  return <ModernStoreHome tenant={tenant} domain={domain} />;
 }
 
 export async function generateMetadata({ searchParams }: StorePageProps) {
