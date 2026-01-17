@@ -18,12 +18,14 @@ export async function middleware(request: NextRequest) {
   
   // Si es el dominio principal de la plataforma
   if (domain === platformDomain || domain === `www.${platformDomain}`) {
-    // Permitir acceso a rutas de plataforma: /, /registro, /login, /admin
+    // Permitir acceso a rutas de plataforma: /, /registro, /login, /admin, /store (para testing), /tenant-admin
     if (
       url.pathname === '/' ||
       url.pathname.startsWith('/registro') ||
       url.pathname.startsWith('/login') ||
       url.pathname.startsWith('/admin') ||
+      url.pathname.startsWith('/store') ||
+      url.pathname.startsWith('/tenant-admin') ||
       url.pathname.startsWith('/_next') ||
       url.pathname.startsWith('/api')
     ) {
