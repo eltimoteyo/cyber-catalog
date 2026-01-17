@@ -114,10 +114,11 @@ function CategoriesContent() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900">Categorías</h2>
+    <div className="min-h-screen bg-[#F1F5F9] pb-24 p-6 md:p-10">
+      <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900">Categorías</h2>
           <p className="text-gray-500 font-medium text-sm mt-1">Organiza tus productos.</p>
         </div>
         <button 
@@ -238,8 +239,7 @@ function CategoriesContent() {
             </div>
           </div>
         </div>
-      )}
-    </div>
+      )}      </div>    </div>
   );
 }
 

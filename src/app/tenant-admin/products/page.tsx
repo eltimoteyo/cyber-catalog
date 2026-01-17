@@ -90,18 +90,19 @@ function ProductsContent() {
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900">Inventario</h2>
-          <p className="text-gray-500 font-medium text-sm mt-1">Gestión de stock.</p>
+    <div className="min-h-screen bg-[#F1F5F9] pb-24 p-6 md:p-10">
+      <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900">Inventario</h2>
+            <p className="text-gray-500 font-medium text-sm mt-1">Gestión de stock.</p>
+          </div>
+          <Link href="/tenant-admin/products/new">
+            <button className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-800 transition-all active:scale-95">
+              <Plus size={18} /> <span className="hidden sm:inline">Nuevo</span>
+            </button>
+          </Link>
         </div>
-        <Link href="/tenant-admin/products/new">
-          <button className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-800 transition-all active:scale-95">
-            <Plus size={18} /> <span className="hidden sm:inline">Nuevo</span>
-          </button>
-        </Link>
-      </div>
 
       <div className="relative group">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rose-500 transition-colors" size={20} />
@@ -173,8 +174,7 @@ function ProductsContent() {
             </div>
           ))}
         </div>
-      )}
-    </div>
+      )}      </div>    </div>
   );
 }
 
