@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const outfit = Outfit({ 
   subsets: ["latin"],
@@ -26,7 +27,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Days+One&display=swap" rel="stylesheet" />
       </head>
       <body className={`${outfit.variable} font-body`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

@@ -12,6 +12,7 @@ export interface TenantConfig {
   
   // Branding
   logo?: string;
+  primaryColor?: string; // Color principal en formato hex (ej: #E11D48)
   colors?: {
     primary: string;
     secondary: string;
