@@ -49,11 +49,14 @@ function CategoriesContent() {
       const q = query(categoriesRef, orderBy('order', 'asc'));
       const snapshot = await getDocs(q);
       
+      console.log('Categories snapshot:', snapshot.size, 'docs');
+      
       const cats = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Category[];
       
+      console.log('Categories loaded:', cats);
       setCategories(cats);
     } catch (error) {
       console.error("Error loading categories:", error);
@@ -133,6 +136,20 @@ function CategoriesContent() {
         <div className="text-center py-12">
           <div className="w-12 h-12 border-4 border-gray-200 border-t-rose-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-500 font-semibold">Cargando categorías...</p>
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sparkles size={32} className="text-gray-300" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No hay categorías</h3>
+          <p className="text-gray-500 mb-6">Crea tu primera categoría para organizar tus productos.</p>
+          <button 
+            onClick={() => setShowModal(true)} 
+            className="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition-all inline-flex items-center gap-2"
+          >
+            <Plus size={20} /> Crear Categoría
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -239,7 +256,9 @@ function CategoriesContent() {
             </div>
           </div>
         </div>
-      )}      </div>    </div>
+      )}
+      </div>
+    </div>
   );
 }
 
