@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Edit3, Coffee, Flower, Gift, Heart, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { initTenantFirebase, centralDb } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, getDoc, doc as firestoreDoc } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc as firestoreDoc } from "firebase/firestore";
 import { createCategory, updateCategory, deleteCategory } from "@/lib/products";
 import { Category, TenantConfig } from "@/lib/types";
 import { toast } from "sonner";
@@ -46,8 +46,7 @@ function CategoriesContent() {
       
       const { db } = initTenantFirebase(tenantData.id, tenantData.firebaseConfig);
       const categoriesRef = collection(db, 'categories');
-      const q = query(categoriesRef, orderBy('order', 'asc'));
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(categoriesRef);
       
       console.log('Categories snapshot:', snapshot.size, 'docs');
       
@@ -188,13 +187,14 @@ function CategoriesContent() {
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-rose-50 text-rose-600">
                     <Sparkles size={24} />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg">{cat.name}</h3>
+                  <h3 className="font-bold text-gray-900 text-lg">{cat.label}</h3>
+                  <p className="text-xs font-semibold text-gray-400 mt-1">{cat.value}</p>
                   <p className="text-xs font-semibold text-gray-400 mt-1">Orden: {cat.order || 0}</p>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     <button
                       onClick={() => {
                         setEditingId(cat.id);
-                        setEditingName(cat.name);
+                        setEditingName(cat.label);
                       }}
                       className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-900"
                     >

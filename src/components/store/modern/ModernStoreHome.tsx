@@ -19,7 +19,7 @@ interface CartItem extends Product {
 
 interface Category {
   id: string;
-  name: string;
+  label: string;
   icon: React.ReactNode;
 }
 
@@ -29,11 +29,11 @@ interface ModernStoreHomeProps {
 }
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'Todo', name: 'Todo', icon: <Sparkles size={18} /> },
-  { id: 'Desayunos', name: 'Desayunos', icon: <Coffee size={18} /> },
-  { id: 'Flores', name: 'Flores', icon: <Flower size={18} /> },
-  { id: 'Peluches', name: 'Peluches', icon: <Gift size={18} /> },
-  { id: 'Globos', name: 'Globos', icon: <Heart size={18} /> },
+  { id: 'Todo', label: 'Todo', icon: <Sparkles size={18} /> },
+  { id: 'Desayunos', label: 'Desayunos', icon: <Coffee size={18} /> },
+  { id: 'Flores', label: 'Flores', icon: <Flower size={18} /> },
+  { id: 'Peluches', label: 'Peluches', icon: <Gift size={18} /> },
+  { id: 'Globos', label: 'Globos', icon: <Heart size={18} /> },
 ];
 
 export default function ModernStoreHome({ tenant, domain }: ModernStoreHomeProps) {
@@ -90,10 +90,10 @@ export default function ModernStoreHome({ tenant, domain }: ModernStoreHomeProps
       // Extract unique categories and create Category objects
       const uniqueCategoryNames = Array.from(new Set(loadedProducts.map(p => p.category).filter(Boolean)));
       const categoryObjects: Category[] = [
-        { id: 'Todo', name: 'Todo', icon: <Sparkles size={18} /> },
+        { id: 'Todo', label: 'Todo', icon: <Sparkles size={18} /> },
         ...uniqueCategoryNames.map(name => ({
           id: name,
-          name: name,
+          label: name,
           icon: getCategoryIcon(name)
         }))
       ];

@@ -5,16 +5,16 @@ import { Sparkles, Coffee, Flower, Gift, Heart } from 'lucide-react';
 
 interface Category {
   id: string;
-  name: string;
+  label: string;
   icon: React.ReactNode;
 }
 
 const CATEGORIES: Category[] = [
-  { id: 'all', name: 'Todo', icon: <Sparkles size={18} /> },
-  { id: 'desayunos', name: 'Desayunos', icon: <Coffee size={18} /> },
-  { id: 'flores', name: 'Flores', icon: <Flower size={18} /> },
-  { id: 'peluches', name: 'Peluches', icon: <Gift size={18} /> },
-  { id: 'globos', name: 'Globos', icon: <Heart size={18} /> },
+  { id: 'all', label: 'Todo', icon: <Sparkles size={18} /> },
+  { id: 'desayunos', label: 'Desayunos', icon: <Coffee size={18} /> },
+  { id: 'flores', label: 'Flores', icon: <Flower size={18} /> },
+  { id: 'peluches', label: 'Peluches', icon: <Gift size={18} /> },
+  { id: 'globos', label: 'Globos', icon: <Heart size={18} /> },
 ];
 
 interface ModernCategoriesProps {
@@ -45,7 +45,7 @@ export default function ModernCategories({
             <span className={activeCategory === cat.id ? "text-white" : "text-gray-400 group-hover:text-rose-500"}>
               {cat.icon}
             </span>
-            <span className="text-sm font-bold tracking-wide">{cat.name}</span>
+            <span className="text-sm font-bold tracking-wide">{cat.label}</span>
           </button>
         ))}
       </div>

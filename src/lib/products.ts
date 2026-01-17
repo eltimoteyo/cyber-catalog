@@ -99,12 +99,15 @@ export async function deleteProduct(
  */
 export async function createCategory(
   db: Firestore,
-  name: string,
+  label: string,
   order?: number
 ): Promise<string> {
+  const value = label.toLowerCase().replace(/\s+/g, '-');
   const docRef = await addDoc(collection(db, 'categories'), {
-    name,
+    label,
+    value,
     order: order || 0,
+    createdAt: Timestamp.now(),
   });
   
   return docRef.id;
@@ -116,13 +119,15 @@ export async function createCategory(
 export async function updateCategory(
   db: Firestore,
   categoryId: string,
-  name: string,
+  label: string,
   order?: number
 ): Promise<void> {
+  const value = label.toLowerCase().replace(/\s+/g, '-');
   const docRef = doc(db, 'categories', categoryId);
   
   await updateDoc(docRef, {
-    name,
+    label,
+    value,
     order: order || 0,
   });
 }

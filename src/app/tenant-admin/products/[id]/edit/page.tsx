@@ -220,7 +220,7 @@ export default function EditProductPage() {
                 >
                   <option value="">Sin categoría</option>
                   {categories.map(cat => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    <option key={cat.id} value={cat.value}>{cat.label}</option>
                   ))}
                 </select>
               </div>

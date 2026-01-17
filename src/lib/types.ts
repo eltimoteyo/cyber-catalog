@@ -60,9 +60,11 @@ export interface Product {
 
 export interface Category {
   id: string;
-  name: string;
-  description?: string;
+  label: string;
+  value: string;
+  icon?: string;
   order?: number;
+  createdAt?: Date;
 }
 
 export interface TenantRegistration {
