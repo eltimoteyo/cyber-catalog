@@ -30,8 +30,13 @@ export interface TenantConfig {
   
   // Contacto
   whatsapp?: string;
-  instagram?: string;
-  facebook?: string;
+  
+  // Redes sociales
+  socialMedia?: {
+    instagram?: string;
+    facebook?: string;
+    tiktok?: string;
+  };
   
   // Metadata
   createdAt: Date;

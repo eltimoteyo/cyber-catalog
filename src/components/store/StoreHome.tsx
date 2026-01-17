@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useMemo } from "react";
 import { TenantConfig, Product } from "@/lib/types";
 import { initTenantFirebase } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { MessageCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatPrice, getWhatsAppLink } from "@/lib/utils";
+import CatalogHeader from "./CatalogHeader";
+import HeroBanner from "./HeroBanner";
+import ProductCard from "./ProductCard";
+import CategoryFilter from "./CategoryFilter";
+import Footer from "./Footer";
+import SearchBar from "./SearchBar";
+
+interface Category {
+  value: string;
+  label: string;
+  icon: string;
+}
 
 interface StoreHomeProps {
   tenant: TenantConfig;
@@ -16,10 +23,14 @@ interface StoreHomeProps {
 
 export default function StoreHome({ tenant }: StoreHomeProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    async function loadProducts() {
+    async function loadData() {
       try {
         // Inicializar Firebase del tenant
         const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
@@ -37,14 +48,26 @@ export default function StoreHome({ tenant }: StoreHomeProps) {
         })) as Product[];
 
         setProducts(productsData);
+
+        // Cargar categorías
+        const categoriesRef = collection(db, "categories");
+        const categoriesSnapshot = await getDocs(categoriesRef);
+
+        const categoriesData = categoriesSnapshot.docs.map((doc) => ({
+          value: doc.data().value,
+          label: doc.data().label,
+          icon: doc.data().icon,
+        })) as Category[];
+
+        setCategories(categoriesData);
       } catch (error) {
-        console.error("Error loading products:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadProducts();
+    loadData();
   }, [tenant]);
 
   // Aplicar colores personalizados del tenant
@@ -63,139 +86,88 @@ export default function StoreHome({ tenant }: StoreHomeProps) {
     }
   }, [tenant.colors]);
 
+  const filteredProducts = useMemo(() => {
+    let result = selectedCategory === "all" 
+      ? products 
+      : products.filter(product => product.category === selectedCategory);
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(product => 
+        product.name.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [products, selectedCategory, searchQuery]);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {tenant.logo && (
-                <img
-                  src={tenant.logo}
-                  alt={tenant.name}
-                  className="h-10 w-10 object-contain"
-                />
-              )}
-              <h1 className="text-2xl font-bold">{tenant.name}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              {tenant.whatsapp && (
-                <a
-                  href={getWhatsAppLink(tenant.whatsapp, `Hola! Tengo una consulta sobre ${tenant.name}`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button>
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    WhatsApp
-                  </Button>
-                </a>
-              )}
-              <Link href="/tenant-admin">
-                <Button variant="outline" size="sm">
-                  Admin
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <CatalogHeader 
+        tenant={tenant}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+      
+      {/* Hero Banner - All screens */}
+      <HeroBanner tenant={tenant} />
 
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-muted to-background py-12">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">
-            Bienvenido a {tenant.name}
+      {/* Mobile: Search Bar - appears when carousel is in mobile mode */}
+      <div className="md:hidden container py-1 px-4">
+        <SearchBar 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Buscar productos..."
+        />
+      </div>
+      
+      <main className="container pt-3 pb-8 md:pt-10 md:pb-4 space-y-8 md:space-y-10 px-4" id="main-content">
+        {/* Category Filter */}
+        <div id="productos">
+          <CategoryFilter 
+            categories={categories}
+            selectedCategory={selectedCategory} 
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
+
+        {/* Products Section Header */}
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            Nuestros Productos
           </h2>
-          <p className="text-xl text-muted-foreground">
-            Descubre nuestros productos
+          <p className="text-muted-foreground">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
           </p>
         </div>
-      </section>
 
-      {/* Products Grid */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          {loading ? (
-            <div className="text-center">Cargando productos...</div>
-          ) : products.length === 0 ? (
-            <div className="text-center text-muted-foreground">
-              <p className="text-xl">Aún no hay productos disponibles</p>
-              <p className="mt-2">Pronto agregaremos nuevos artículos</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  tenant={tenant}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        {/* Products Grid */}
+        {loading ? (
+          <div className="text-center py-12">Cargando productos...</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <p className="text-xl">No se encontraron productos</p>
+            <p className="mt-2">Intenta con otra búsqueda o categoría</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                tenant={tenant}
+                isExpanded={expandedProductId === product.id}
+                onExpand={() => setExpandedProductId(product.id)}
+                onCollapse={() => setExpandedProductId(null)}
+              />
+            ))}
+          </div>
+        )}
+      </main>
 
       {/* Footer */}
-      <footer className="border-t py-8 mt-12">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} {tenant.name}. Todos los derechos reservados.</p>
-          <p className="text-sm mt-2">
-            Powered by <a href="https://createam.cloud" className="text-primary hover:underline">Createam</a>
-          </p>
-        </div>
-      </footer>
+      <Footer tenant={tenant} />
     </div>
-  );
-}
-
-function ProductCard({ product, tenant }: { product: Product; tenant: TenantConfig }) {
-  const handleWhatsAppClick = () => {
-    if (!tenant.whatsapp) return;
-
-    const message = `Hola! Estoy interesado en: ${product.name} - ${formatPrice(product.price)}`;
-    const link = getWhatsAppLink(tenant.whatsapp, message);
-    window.open(link, "_blank");
-  };
-
-  return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="aspect-square relative overflow-hidden bg-muted">
-        {product.imageUrls && product.imageUrls[0] ? (
-          <img
-            src={product.imageUrls[0]}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            Sin imagen
-          </div>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-          {product.name}
-        </h3>
-        {product.description && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-            {product.description}
-          </p>
-        )}
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-primary">
-            {formatPrice(product.price)}
-          </span>
-          {tenant.whatsapp && (
-            <Button size="sm" onClick={handleWhatsAppClick}>
-              <MessageCircle className="mr-1 h-4 w-4" />
-              Comprar
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 }

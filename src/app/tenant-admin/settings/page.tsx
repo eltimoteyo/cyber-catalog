@@ -49,8 +49,8 @@ export default function SettingsPage() {
         secondaryColor: tenantData.colors?.secondary || "210 40% 96.1%",
         accentColor: tenantData.colors?.accent || "210 40% 96.1%",
         whatsapp: tenantData.whatsapp || "",
-        instagram: tenantData.instagram || "",
-        facebook: tenantData.facebook || "",
+        instagram: tenantData.socialMedia?.instagram || "",
+        facebook: tenantData.socialMedia?.facebook || "",
       });
       setLogoPreview(tenantData.logo || "");
     } catch (error) {
@@ -95,8 +95,10 @@ export default function SettingsPage() {
           accent: formData.accentColor,
         },
         whatsapp: formData.whatsapp,
-        instagram: formData.instagram,
-        facebook: formData.facebook,
+        socialMedia: {
+          instagram: formData.instagram,
+          facebook: formData.facebook,
+        },
       });
       
       toast.success("Configuración actualizada");
