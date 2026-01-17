@@ -3,41 +3,53 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getTenantByDomain } from "@/lib/tenants";
+import { useAuth } from "@/contexts/AuthContext";
 import { initTenantFirebase } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, deleteDoc, doc } from "firebase/firestore";
-import { Product } from "@/lib/types";
+import { collection, getDocs, query, orderBy, deleteDoc, doc, getDoc, doc as firestoreDoc } from "firebase/firestore";
+import { centralDb } from "@/lib/firebase";
+import { Product, TenantConfig } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function ProductsPage() {
-  const searchParams = useSearchParams();
+function ProductsContent() {
   const router = useRouter();
-  const domain = searchParams.get('_domain') || 'localhost';
+  const { user } = useAuth();
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [tenantId, setTenantId] = useState<string>("");
+  const [tenant, setTenant] = useState<TenantConfig | null>(null);
 
   useEffect(() => {
-    loadProducts();
-  }, [domain]);
+    if (user?.tenantId) {
+      loadProducts();
+    }
+  }, [user]);
 
   async function loadProducts() {
+    if (!user?.tenantId) return;
+    
     setLoading(true);
     try {
-      const tenant = await getTenantByDomain(domain);
-      if (!tenant) return;
+      // Obtener configuración del tenant
+      const tenantDoc = await getDoc(firestoreDoc(centralDb, 'tenants', user.tenantId));
+      if (!tenantDoc.exists()) {
+        toast.error("Tenant no encontrado");
+        return;
+      }
       
-      setTenantId(tenant.id);
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
+      const tenantData = { id: tenantDoc.id, ...tenantDoc.data() } as TenantConfig;
+      setTenant(tenantData);
+      
+      // Inicializar Firebase del tenant y cargar productos
+      const { db } = initTenantFirebase(tenantData.id, tenantData.firebaseConfig);
       
       const productsRef = collection(db, 'products');
       const q = query(productsRef, orderBy('createdAt', 'desc'));
@@ -61,11 +73,9 @@ export default function ProductsPage() {
 
   async function handleDelete(productId: string) {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+    if (!tenant) return;
     
     try {
-      const tenant = await getTenantByDomain(domain);
-      if (!tenant) return;
-      
       const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
       await deleteDoc(doc(db, 'products', productId));
       
@@ -206,5 +216,13 @@ function ProductRow({
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <ProtectedRoute>
+      <ProductsContent />
+    </ProtectedRoute>
   );
 }
