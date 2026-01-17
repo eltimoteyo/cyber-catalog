@@ -21,6 +21,8 @@ export default function SettingsPage() {
   
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingTenant, setLoadingTenant] = useState(true);
+  const [error, setError] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [formData, setFormData] = useState({
@@ -38,10 +40,19 @@ export default function SettingsPage() {
   }, [domain]);
 
   async function loadTenant() {
+    setLoadingTenant(true);
+    setError("");
     try {
+      console.log('Loading tenant for domain:', domain);
       const tenantData = await getTenantByDomain(domain);
-      if (!tenantData) return;
       
+      if (!tenantData) {
+        setError(`No se encontró tenant para el dominio: ${domain}`);
+        console.error('Tenant not found for domain:', domain);
+        return;
+      }
+      
+      console.log('Tenant loaded:', tenantData);
       setTenant(tenantData);
       setFormData({
         logo: tenantData.logo || "",
@@ -55,6 +66,9 @@ export default function SettingsPage() {
       setLogoPreview(tenantData.logo || "");
     } catch (error) {
       console.error("Error loading tenant:", error);
+      setError(`Error al cargar configuración: ${error}`);
+    } finally {
+      setLoadingTenant(false);
     }
   }
 
@@ -111,8 +125,58 @@ export default function SettingsPage() {
     }
   }
 
+  if (loadingTenant) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando configuración...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Configuración</h2>
+          <p className="text-muted-foreground">
+            Personaliza la apariencia y datos de tu tienda
+          </p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-red-600 mb-2">{error}</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Dominio actual: <strong>{domain}</strong>
+              </p>
+              <Button onClick={loadTenant} variant="outline">
+                Reintentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!tenant) {
-    return <div>Cargando...</div>;
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Configuración</h2>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No se encontró configuración del tenant</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
