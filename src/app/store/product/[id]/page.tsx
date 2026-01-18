@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTenantByDomain } from "@/lib/tenants";
-import StoreProduct from "@/components/store/StoreProduct";
+import ModernProductDetail from "@/components/store/modern/ModernProductDetail";
 
 interface StoreProductPageProps {
   params: Promise<{ id: string }>;
@@ -21,5 +21,5 @@ export default async function StoreProductPage({ params, searchParams }: StorePr
     return notFound();
   }
 
-  return <StoreProduct tenant={tenant} productId={id} />;
+  return <ModernProductDetail tenant={tenant} productId={id} domain={_domain} />;
 }
