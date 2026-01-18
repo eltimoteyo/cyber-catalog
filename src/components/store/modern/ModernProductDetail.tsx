@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ShoppingBag, Share2, Check, Zap, Star, ArrowLeft } from 'lucide-react';
 import { Product, TenantConfig } from '@/lib/types';
-import { collection, getDocs, query, limit } from 'firebase/firestore';
+import { collection, getDocs, query, limit, doc, getDoc } from 'firebase/firestore';
 import { initTenantFirebase } from '@/lib/firebase';
 import ModernNavbar from './ModernNavbar';
 import ModernFooter from './ModernFooter';
@@ -15,19 +15,53 @@ interface CartItem extends Product {
 }
 
 interface ModernProductDetailProps {
-  product: Product;
+  productId: string;
   tenant: TenantConfig;
   domain: string;
 }
 
-export default function ModernProductDetail({ product, tenant, domain }: ModernProductDetailProps) {
+export default function ModernProductDetail({ productId, tenant, domain }: ModernProductDetailProps) {
   const router = useRouter();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Cargar producto
+  useEffect(() => {
+    loadProduct();
+  }, [productId, tenant.id]);
+
+  async function loadProduct() {
+    try {
+      setLoading(true);
+      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
+      const productDoc = await getDoc(doc(db, 'products', productId));
+      
+      if (!productDoc.exists()) {
+        router.push('/');
+        return;
+      }
+
+      const productData = {
+        id: productDoc.id,
+        ...productDoc.data(),
+        createdAt: productDoc.data().createdAt?.toDate(),
+        updatedAt: productDoc.data().updatedAt?.toDate(),
+      } as Product;
+
+      setProduct(productData);
+    } catch (error) {
+      console.error('Error loading product:', error);
+      router.push('/');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Scroll detection
   useEffect(() => {
@@ -39,12 +73,14 @@ export default function ModernProductDetail({ product, tenant, domain }: ModernP
   }, []);
 
   useEffect(() => {
+    if (!product) return;
     setActiveImage(0);
     setQuantity(1);
     loadRelatedProducts();
-  }, [product.id]);
+  }, [product?.id]);
 
   const loadRelatedProducts = async () => {
+    if (!product) return;
     try {
       const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
       const productsRef = collection(db, 'products');
@@ -63,6 +99,7 @@ export default function ModernProductDetail({ product, tenant, domain }: ModernP
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {
@@ -86,6 +123,7 @@ export default function ModernProductDetail({ product, tenant, domain }: ModernP
   };
 
   const handleShare = async () => {
+    if (!product) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -98,6 +136,17 @@ export default function ModernProductDetail({ product, tenant, domain }: ModernP
       }
     }
   };
+
+  if (loading || !product) {
+    return (
+      <div className="min-h-screen bg-[#F1F5F9] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-rose-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-semibold">Cargando producto...</p>
+        </div>
+      </div>
+    );
+  }
 
   const images = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : ['/placeholder.svg'];
 
