@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { getTenantByDomain } from "@/lib/tenants";
 import ModernProductDetail from "@/components/store/modern/ModernProductDetail";
+import { doc, getDoc } from "firebase/firestore";
+import { initTenantFirebase } from "@/lib/firebase";
+import { Product } from "@/lib/types";
 
 interface StoreProductPageProps {
   params: Promise<{ id: string }>;
@@ -21,5 +24,20 @@ export default async function StoreProductPage({ params, searchParams }: StorePr
     return notFound();
   }
 
-  return <ModernProductDetail tenant={tenant} productId={id} domain={_domain} />;
+  // Cargar el producto
+  const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
+  const productDoc = await getDoc(doc(db, 'products', id));
+  
+  if (!productDoc.exists()) {
+    return notFound();
+  }
+
+  const product = {
+    id: productDoc.id,
+    ...productDoc.data(),
+    createdAt: productDoc.data().createdAt?.toDate(),
+    updatedAt: productDoc.data().updatedAt?.toDate(),
+  } as Product;
+
+  return <ModernProductDetail tenant={tenant} product={product} domain={_domain} />;
 }
