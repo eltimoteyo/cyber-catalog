@@ -141,7 +141,7 @@ export default function ModernStoreHome({ tenant, domain }: ModernStoreHomeProps
   };
 
   const handleProductClick = (product: Product) => {
-    router.push(`/store/products/${product.id}?_domain=${domain}`);
+    router.push(`/products/${product.id}?_domain=${domain}`);
   };
 
   const filteredProducts = activeCategory === 'Todo'

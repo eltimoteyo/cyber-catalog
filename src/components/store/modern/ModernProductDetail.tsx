@@ -272,7 +272,7 @@ export default function ModernProductDetail({ product, tenant, domain }: ModernP
                 <div 
                   key={p.id} 
                   className="group relative cursor-pointer" 
-                  onClick={() => router.push(`/store/products/${p.id}?_domain=${domain}`)}
+                  onClick={() => router.push(`/products/${p.id}?_domain=${domain}`)}
                 >
                   <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3 border border-gray-100 group-hover:shadow-lg transition-all duration-300">
                     <img 

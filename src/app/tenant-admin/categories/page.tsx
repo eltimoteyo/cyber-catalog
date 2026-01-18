@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Edit3, Coffee, Flower, Gift, Heart, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Edit3, Coffee, Flower, Gift, Heart, Sparkles, Package, ShoppingBag, Star, Cake, Wine, Palette, Home, Shirt, Watch, Footprints, Baby, Music, Book, Camera, Gamepad2, Dumbbell, Pizza, IceCream } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { initTenantFirebase, centralDb } from "@/lib/firebase";
 import { collection, getDocs, getDoc, doc as firestoreDoc } from "firebase/firestore";
@@ -11,6 +11,41 @@ import { createCategory, updateCategory, deleteCategory } from "@/lib/products";
 import { Category, TenantConfig } from "@/lib/types";
 import { toast } from "sonner";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import * as LucideIcons from "lucide-react";
+
+// Íconos disponibles para categorías
+const AVAILABLE_ICONS = [
+  { name: "Package", icon: Package },
+  { name: "ShoppingBag", icon: ShoppingBag },
+  { name: "Gift", icon: Gift },
+  { name: "Heart", icon: Heart },
+  { name: "Star", icon: Star },
+  { name: "Sparkles", icon: Sparkles },
+  { name: "Coffee", icon: Coffee },
+  { name: "Flower", icon: Flower },
+  { name: "Cake", icon: Cake },
+  { name: "Wine", icon: Wine },
+  { name: "Palette", icon: Palette },
+  { name: "Home", icon: Home },
+  { name: "Shirt", icon: Shirt },
+  { name: "Watch", icon: Watch },
+  { name: "Footprints", icon: Footprints },
+  { name: "Baby", icon: Baby },
+  { name: "Music", icon: Music },
+  { name: "Book", icon: Book },
+  { name: "Camera", icon: Camera },
+  { name: "Gamepad2", icon: Gamepad2 },
+  { name: "Dumbbell", icon: Dumbbell },
+  { name: "Pizza", icon: Pizza },
+  { name: "IceCream", icon: IceCream },
+];
+
+// Función para renderizar ícono dinámicamente
+const renderIcon = (iconName?: string, size = 24) => {
+  if (!iconName) return <Sparkles size={size} />;
+  const IconComponent = (LucideIcons as any)[iconName];
+  return IconComponent ? <IconComponent size={size} /> : <Sparkles size={size} />;
+};
 
 function CategoriesContent() {
   const { user } = useAuth();
@@ -19,7 +54,9 @@ function CategoriesContent() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState("");
+  const [newIcon, setNewIcon] = useState("Package");
   const [editingName, setEditingName] = useState("");
+  const [editingIcon, setEditingIcon] = useState("Package");
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -70,10 +107,11 @@ function CategoriesContent() {
     
     try {
       const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
-      await createCategory(db, newCategory, categories.length);
+      await createCategory(db, newCategory, categories.length, newIcon);
       
       toast.success("Categoría creada");
       setNewCategory("");
+      setNewIcon("Package");
       setShowModal(false);
       loadCategories();
     } catch (error) {
@@ -88,11 +126,12 @@ function CategoriesContent() {
     try {
       const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
       const category = categories.find(c => c.id === categoryId);
-      await updateCategory(db, categoryId, editingName, category?.order);
+      await updateCategory(db, categoryId, editingName, category?.order, editingIcon);
       
       toast.success("Categoría actualizada");
       setEditingId(null);
       setEditingName("");
+      setEditingIcon("Package");
       loadCategories();
     } catch (error) {
       console.error("Error updating category:", error);
@@ -164,6 +203,22 @@ function CategoriesContent() {
                     autoFocus
                     onKeyPress={(e) => e.key === 'Enter' && handleUpdate(cat.id)}
                   />
+                  <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto">
+                    {AVAILABLE_ICONS.map(({ name, icon: Icon }) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setEditingIcon(name)}
+                        className={`p-2 rounded-lg border transition-all ${
+                          editingIcon === name
+                            ? 'border-rose-500 bg-rose-50 text-rose-600'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon size={18} />
+                      </button>
+                    ))}
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleUpdate(cat.id)}
@@ -185,16 +240,16 @@ function CategoriesContent() {
               ) : (
                 <>
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-rose-50 text-rose-600">
-                    <Sparkles size={24} />
+                    {renderIcon(cat.icon, 24)}
                   </div>
                   <h3 className="font-bold text-gray-900 text-lg">{cat.label}</h3>
                   <p className="text-xs font-semibold text-gray-400 mt-1">{cat.value}</p>
-                  <p className="text-xs font-semibold text-gray-400 mt-1">Orden: {cat.order || 0}</p>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     <button
                       onClick={() => {
                         setEditingId(cat.id);
                         setEditingName(cat.label);
+                        setEditingIcon(cat.icon || 'Package');
                       }}
                       className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-900"
                     >
@@ -245,6 +300,26 @@ function CategoriesContent() {
                   placeholder="Ej: Aniversario"
                   autoFocus
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Ícono</label>
+                <div className="grid grid-cols-6 gap-2 p-4 bg-gray-50 rounded-2xl max-h-48 overflow-y-auto">
+                  {AVAILABLE_ICONS.map(({ name, icon: Icon }) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => setNewIcon(name)}
+                      className={`p-3 rounded-xl border-2 transition-all ${
+                        newIcon === name
+                          ? 'border-rose-500 bg-white text-rose-600 shadow-sm'
+                          : 'border-transparent hover:border-gray-200 hover:bg-white'
+                      }`}
+                    >
+                      <Icon size={20} strokeWidth={2.5} />
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <button 
