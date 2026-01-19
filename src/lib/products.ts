@@ -5,7 +5,12 @@ import {
   deleteDoc, 
   doc, 
   Timestamp,
-  Firestore 
+  Firestore,
+  getDocs,
+  query,
+  limit,
+  orderBy,
+  where
 } from 'firebase/firestore';
 import { 
   ref, 

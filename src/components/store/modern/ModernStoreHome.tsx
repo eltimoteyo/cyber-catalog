@@ -26,6 +26,7 @@ interface Category {
 interface ModernStoreHomeProps {
   tenant: TenantConfig;
   domain: string;
+  initialProducts?: Product[]; // Productos cargados en el servidor
 }
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -36,15 +37,15 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: 'Globos', label: 'Globos', icon: <Heart size={18} /> },
 ];
 
-export default function ModernStoreHome({ tenant, domain }: ModernStoreHomeProps) {
+export default function ModernStoreHome({ tenant, domain, initialProducts = [] }: ModernStoreHomeProps) {
   const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('Todo');
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Ya no cargamos inicialmente si tenemos productos
 
   // Scroll detection
   useEffect(() => {
@@ -55,10 +56,24 @@ export default function ModernStoreHome({ tenant, domain }: ModernStoreHomeProps
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Load products and categories
+  // Load products and categories solo si no hay productos iniciales
   useEffect(() => {
-    loadProducts();
-  }, [tenant.id]);
+    if (initialProducts.length === 0) {
+      loadProducts();
+    } else {
+      // Extraer categorías de los productos iniciales
+      const uniqueCategoryNames = Array.from(new Set(initialProducts.map(p => p.category).filter(Boolean)));
+      const categoryObjects: Category[] = [
+        { id: 'Todo', label: 'Todo', icon: <Sparkles size={18} /> },
+        ...uniqueCategoryNames.map(name => ({
+          id: name,
+          label: name,
+          icon: getCategoryIcon(name)
+        }))
+      ];
+      setCategories(categoryObjects);
+    }
+  }, [tenant.id, initialProducts.length]);
 
   // Listen for add to cart events from product detail pages
   useEffect(() => {

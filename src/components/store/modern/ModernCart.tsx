@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { X, Trash2 } from 'lucide-react';
 import { Product, TenantConfig } from '@/lib/types';
 
@@ -61,11 +62,16 @@ export default function ModernCart({
           ) : (
             cart.map(item => (
               <div key={item.id} className="flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                <img 
-                  src={item.imageUrls && item.imageUrls[0] || '/placeholder.svg'} 
-                  className="w-20 h-20 rounded-lg object-cover flex-shrink-0" 
-                  alt={item.name}
-                />
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                  <Image 
+                    src={item.imageUrls && item.imageUrls[0] || '/placeholder.svg'} 
+                    alt={item.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-sm line-clamp-2">{item.name}</h4>
                   <p className="text-xs text-gray-500 mt-1">

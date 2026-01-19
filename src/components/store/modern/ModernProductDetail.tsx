@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ShoppingBag, Share2, Check, Zap, Star, ArrowLeft } from 'lucide-react';
@@ -18,23 +19,33 @@ interface ModernProductDetailProps {
   productId: string;
   tenant: TenantConfig;
   domain: string;
+  initialProduct?: Product; // Producto cargado en el servidor
+  initialRelatedProducts?: Product[]; // Productos relacionados cargados en el servidor
 }
 
-export default function ModernProductDetail({ productId, tenant, domain }: ModernProductDetailProps) {
+export default function ModernProductDetail({ 
+  productId, 
+  tenant, 
+  domain,
+  initialProduct,
+  initialRelatedProducts = []
+}: ModernProductDetailProps) {
   const router = useRouter();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState<Product | null>(initialProduct || null);
+  const [loading, setLoading] = useState(!initialProduct); // Solo carga si no hay producto inicial
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>(initialRelatedProducts);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Cargar producto
+  // Cargar producto solo si no hay producto inicial
   useEffect(() => {
-    loadProduct();
-  }, [productId, tenant.id]);
+    if (!initialProduct) {
+      loadProduct();
+    }
+  }, [productId, tenant.id, initialProduct]);
 
   async function loadProduct() {
     try {
@@ -76,15 +87,18 @@ export default function ModernProductDetail({ productId, tenant, domain }: Moder
     if (!product) return;
     setActiveImage(0);
     setQuantity(1);
-    loadRelatedProducts();
-  }, [product?.id]);
+    // Solo cargar productos relacionados si no hay productos iniciales
+    if (initialRelatedProducts.length === 0) {
+      loadRelatedProducts();
+    }
+  }, [product?.id, initialRelatedProducts.length]);
 
   const loadRelatedProducts = async () => {
     if (!product) return;
     try {
       const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
       const productsRef = collection(db, 'products');
-      const q = query(productsRef, limit(4));
+      const q = query(productsRef, limit(5)); // +1 para asegurar que tengamos suficientes
       const snapshot = await getDocs(q);
       
       const products = snapshot.docs
@@ -180,10 +194,13 @@ export default function ModernProductDetail({ productId, tenant, domain }: Moder
           <div className="flex flex-col gap-4">
             {/* Imagen Principal */}
             <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden bg-white shadow-sm border border-gray-100">
-              <img 
+              <Image 
                 src={images[activeImage]} 
-                alt={product.name} 
-                className="w-full h-full object-cover"
+                alt={product.name}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+                priority
               />
               {product.featured && (
                 <span className="absolute top-6 left-6 bg-gradient-to-r from-rose-600 to-pink-600 text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-xl">
@@ -211,7 +228,14 @@ export default function ModernProductDetail({ productId, tenant, domain }: Moder
                         : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} className="w-full h-full object-cover" alt="" />
+                    <Image 
+                      src={img} 
+                      alt={`${product.name} - Vista ${idx + 1}`}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                      loading="lazy"
+                    />
                   </button>
                 ))}
               </div>
@@ -308,10 +332,13 @@ export default function ModernProductDetail({ productId, tenant, domain }: Moder
                   onClick={() => router.push(`/product/${p.id}`)}
                 >
                   <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4 border border-gray-100 group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
-                    <img 
+                    <Image 
                       src={p.imageUrls && p.imageUrls[0] || '/placeholder.svg'} 
-                      className="w-full h-full object-cover" 
                       alt={p.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-rose-600 transition-colors">

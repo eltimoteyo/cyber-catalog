@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import { getTenantByDomain } from "@/lib/tenants";
 import { extractDomain } from "@/lib/utils";
+import { getTenantProducts } from "@/lib/products-server";
 import ModernStoreHome from "@/components/store/modern/ModernStoreHome";
 
+// Cache por 60 segundos para mejorar rendimiento
+export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 interface StorePageProps {
@@ -39,7 +42,12 @@ export default async function StorePage({ searchParams }: StorePageProps) {
     );
   }
 
-  return <ModernStoreHome tenant={tenant} domain={domain} />;
+  // Cargar productos en el servidor (con límite para mejor rendimiento)
+  const products = await getTenantProducts(tenant.id, tenant.firebaseConfig, {
+    limit: 50, // Límite razonable para la carga inicial
+  });
+
+  return <ModernStoreHome tenant={tenant} domain={domain} initialProducts={products} />;
 }
 
 export async function generateMetadata({ searchParams }: StorePageProps) {
