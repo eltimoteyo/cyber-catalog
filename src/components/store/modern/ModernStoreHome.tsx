@@ -156,7 +156,8 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
   };
 
   const handleProductClick = (product: Product) => {
-    router.push(`/product/${product.id}`);
+    // Usar la ruta completa /store/product para que funcione con el middleware
+    router.push(`/store/product/${product.id}?_domain=${encodeURIComponent(domain)}`);
   };
 
   const filteredProducts = activeCategory === 'Todo'

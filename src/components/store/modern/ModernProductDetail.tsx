@@ -329,7 +329,7 @@ export default function ModernProductDetail({
                 <div 
                   key={p.id} 
                   className="group relative cursor-pointer" 
-                  onClick={() => router.push(`/product/${p.id}`)}
+                  onClick={() => router.push(`/store/product/${p.id}?_domain=${encodeURIComponent(domain)}`)}
                 >
                   <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4 border border-gray-100 group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
                     <Image 
