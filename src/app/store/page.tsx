@@ -3,6 +3,7 @@ import { getTenantByDomain } from "@/lib/tenants";
 import { extractDomain } from "@/lib/utils";
 import { getTenantProducts } from "@/lib/products-server";
 import ModernStoreHome from "@/components/store/modern/ModernStoreHome";
+import CartProviderWrapper from "@/components/store/CartProviderWrapper";
 
 // Cache por 60 segundos para mejorar rendimiento
 export const revalidate = 60;
@@ -47,7 +48,11 @@ export default async function StorePage({ searchParams }: StorePageProps) {
     limit: 50, // Límite razonable para la carga inicial
   });
 
-  return <ModernStoreHome tenant={tenant} domain={domain} initialProducts={products} />;
+  return (
+    <CartProviderWrapper tenant={tenant}>
+      <ModernStoreHome tenant={tenant} domain={domain} initialProducts={products} />
+    </CartProviderWrapper>
+  );
 }
 
 export async function generateMetadata({ searchParams }: StorePageProps) {

@@ -7,8 +7,7 @@ import {
   Instagram,
   Facebook,
   MessageCircle,
-  MoreVertical,
-  ArrowLeft
+  MoreVertical
 } from 'lucide-react';
 import { TenantConfig } from '@/lib/types';
 
@@ -46,13 +45,8 @@ export default function ModernNavbar({
           : 'bg-transparent border-transparent max-w-7xl'
         }
       `}>
-        {/* Logo / Back Button */}
+        {/* Logo */}
         <div className="flex items-center gap-3 shrink-0 mr-2 md:mr-6">
-          {isProductPage && onGoHome && (
-            <button onClick={onGoHome} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-              <ArrowLeft size={24} className={isProductPage ? 'text-gray-900' : (isScrolled ? 'text-gray-900' : 'text-white')} />
-            </button>
-          )}
           <a 
             href="#" 
             onClick={(e) => { e.preventDefault(); onGoHome?.(); }} 

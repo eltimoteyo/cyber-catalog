@@ -10,10 +10,7 @@ import { initTenantFirebase } from '@/lib/firebase';
 import ModernNavbar from './ModernNavbar';
 import ModernFooter from './ModernFooter';
 import ModernCart from './ModernCart';
-
-interface CartItem extends Product {
-  quantity: number;
-}
+import { useCart } from '@/contexts/CartContext';
 
 interface ModernProductDetailProps {
   productId: string;
@@ -31,12 +28,12 @@ export default function ModernProductDetail({
   initialRelatedProducts = []
 }: ModernProductDetailProps) {
   const router = useRouter();
+  const { cart, addToCart, removeFromCart, getCartCount } = useCart();
   const [product, setProduct] = useState<Product | null>(initialProduct || null);
   const [loading, setLoading] = useState(!initialProduct); // Solo carga si no hay producto inicial
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>(initialRelatedProducts);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -114,22 +111,12 @@ export default function ModernProductDetail({
 
   const handleAddToCart = () => {
     if (!product) return;
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prevCart, { ...product, quantity }];
-    });
+    addToCart(product, quantity);
     setIsCartOpen(true);
   };
 
   const handleRemoveItem = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+    removeFromCart(productId);
   };
 
   const handleGoHome = () => {
@@ -169,7 +156,7 @@ export default function ModernProductDetail({
       {/* Navbar */}
       <ModernNavbar
         tenant={tenant}
-        cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+        cartCount={getCartCount()}
         onOpenCart={() => setIsCartOpen(true)}
         isScrolled={isScrolled}
         onGoHome={handleGoHome}

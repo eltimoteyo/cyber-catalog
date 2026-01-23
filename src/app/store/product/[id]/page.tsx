@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTenantByDomain } from "@/lib/tenants";
 import { getTenantProductById, getRelatedProducts } from "@/lib/products-server";
 import ModernProductDetail from "@/components/store/modern/ModernProductDetail";
+import CartProviderWrapper from "@/components/store/CartProviderWrapper";
 
 // Cache por 60 segundos para mejorar rendimiento
 export const revalidate = 60;
@@ -61,12 +62,14 @@ export default async function StoreProductPage({ params, searchParams }: StorePr
   }
 
   return (
-    <ModernProductDetail 
-      tenant={tenant} 
-      productId={id} 
-      domain={_domain}
-      initialProduct={product}
-      initialRelatedProducts={relatedProducts}
-    />
+    <CartProviderWrapper tenant={tenant}>
+      <ModernProductDetail 
+        tenant={tenant} 
+        productId={id} 
+        domain={_domain}
+        initialProduct={product}
+        initialRelatedProducts={relatedProducts}
+      />
+    </CartProviderWrapper>
   );
 }

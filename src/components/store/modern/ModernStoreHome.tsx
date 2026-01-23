@@ -12,10 +12,7 @@ import ModernFooter from './ModernFooter';
 import { TenantConfig, Product } from '@/lib/types';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { initTenantFirebase } from '@/lib/firebase';
-
-interface CartItem extends Product {
-  quantity: number;
-}
+import { useCart } from '@/contexts/CartContext';
 
 interface Category {
   id: string;
@@ -39,7 +36,7 @@ const DEFAULT_CATEGORIES: Category[] = [
 
 export default function ModernStoreHome({ tenant, domain, initialProducts = [] }: ModernStoreHomeProps) {
   const router = useRouter();
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const { cart, addToCart, removeFromCart, getCartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('Todo');
@@ -79,12 +76,15 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
   useEffect(() => {
     const handleAddToCart = (e: Event) => {
       const customEvent = e as CustomEvent;
-      handleAddProduct(customEvent.detail);
+      const product = customEvent.detail.product;
+      const quantity = customEvent.detail.quantity || 1;
+      addToCart(product, quantity);
+      setIsCartOpen(true);
     };
     
     window.addEventListener('addToCart', handleAddToCart);
     return () => window.removeEventListener('addToCart', handleAddToCart);
-  }, [cart]);
+  }, [addToCart]);
 
   const loadProducts = async () => {
     try {
@@ -131,24 +131,12 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
 
   const handleAddProduct = (product: Product) => {
     const quantity = (product as any).quantity || 1;
-    
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prevCart, { ...product, quantity }];
-    });
-    
+    addToCart(product, quantity);
     setIsCartOpen(true);
   };
 
   const handleRemoveItem = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+    removeFromCart(productId);
   };
 
   const handleGoHome = () => {
@@ -169,7 +157,7 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
       {/* Navbar */}
       <ModernNavbar
         tenant={tenant}
-        cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+        cartCount={getCartCount()}
         onOpenCart={() => setIsCartOpen(true)}
         isScrolled={isScrolled}
         onGoHome={handleGoHome}
