@@ -17,15 +17,36 @@ export default async function StoreProductPage({ params, searchParams }: StorePr
   const resolvedSearchParams = await searchParams;
   const _domain = resolvedSearchParams._domain;
 
+  // Log para depuración
+  console.log('[StoreProductPage]', {
+    productId: id,
+    _domain,
+    allSearchParams: resolvedSearchParams,
+    hasDomain: !!_domain
+  });
+
   if (!_domain) {
-    console.error('StoreProductPage: No _domain parameter found', { searchParams: resolvedSearchParams });
+    console.error('[StoreProductPage] ERROR: No _domain parameter found', { 
+      searchParams: resolvedSearchParams,
+      allParams: Object.keys(resolvedSearchParams)
+    });
     return notFound();
   }
 
   const tenant = await getTenantByDomain(_domain);
+  
+  console.log('[StoreProductPage] Tenant lookup:', {
+    domain: _domain,
+    tenantFound: !!tenant,
+    tenantId: tenant?.id,
+    tenantStatus: tenant?.status
+  });
 
   if (!tenant || tenant.status !== 'active') {
-    console.error('StoreProductPage: Tenant not found or inactive', { domain: _domain, tenant });
+    console.error('[StoreProductPage] ERROR: Tenant not found or inactive', { 
+      domain: _domain, 
+      tenant: tenant ? { id: tenant.id, status: tenant.status } : null 
+    });
     return notFound();
   }
 

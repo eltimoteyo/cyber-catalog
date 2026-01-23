@@ -79,6 +79,16 @@ export async function middleware(request: NextRequest) {
   // Agregar el parámetro _domain para identificar el tenant
   internalUrl.searchParams.set('_domain', domain);
   
+  // Log para depuración (solo en desarrollo)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Middleware] Rewrite:', {
+      originalPath: url.pathname,
+      internalPath,
+      domain,
+      finalUrl: internalUrl.toString()
+    });
+  }
+  
   // REWRITE INTERNO: La URL visible NO cambia, solo la ruta interna
   // Ejemplo: 
   //   - URL visible en navegador: bellasorpresa.createam.cloud/product/123
