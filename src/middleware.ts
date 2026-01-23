@@ -36,35 +36,50 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
-  // Para subdominios o dominios personalizados
-  // Reescribir a la ruta de tienda con el dominio como parámetro
+  // ============================================================
+  // PARA SUBDOMINIOS O DOMINIOS PERSONALIZADOS
+  // ============================================================
+  // IMPORTANTE: Usamos rewrite() NO redirect()
+  // - rewrite() mantiene la URL visible limpia (ej: /product/[id])
+  // - Internamente reescribe a /store/product/[id] para usar nuestros componentes
+  // - La URL del navegador NO cambia, solo la ruta interna
+  // - Esto es mejor para SEO: URLs limpias sin /store visible
+  // ============================================================
   
-  // Construir la URL de destino
-  let targetPath = url.pathname;
+  // Determinar la ruta interna de destino (siempre usa /store internamente)
+  let internalPath: string;
   
-  // Si la ruta no empieza con /store, agregar el prefijo
-  if (!targetPath.startsWith('/store')) {
-    // Si es /product/[id], convertir a /store/product/[id]
-    if (targetPath.startsWith('/product/')) {
-      targetPath = `/store${targetPath}`;
-    } else {
-      // Para otras rutas (incluyendo /), usar /store
-      targetPath = `/store${targetPath === '/' ? '' : targetPath}`;
-    }
+  if (url.pathname.startsWith('/product/')) {
+    // URL visible: /product/[id]  →  Ruta interna: /store/product/[id]
+    internalPath = `/store${url.pathname}`;
+  } else if (url.pathname === '/') {
+    // URL visible: /  →  Ruta interna: /store
+    internalPath = '/store';
+  } else if (url.pathname.startsWith('/store')) {
+    // Si ya viene con /store, mantenerlo (para compatibilidad/testing)
+    internalPath = url.pathname;
+  } else {
+    // Para cualquier otra ruta, agregar /store
+    internalPath = `/store${url.pathname}`;
   }
   
-  // Crear nueva URL con el path correcto
-  const storeUrl = new URL(targetPath, request.url);
+  // Crear URL interna para el rewrite (NO cambia la URL visible del navegador)
+  const internalUrl = new URL(internalPath, request.url);
   
   // Copiar todos los query params existentes
   url.searchParams.forEach((value, key) => {
-    storeUrl.searchParams.set(key, value);
+    internalUrl.searchParams.set(key, value);
   });
   
-  // Asegurar que _domain esté presente y sea el dominio correcto
-  storeUrl.searchParams.set('_domain', domain);
+  // Agregar el parámetro _domain para identificar el tenant
+  internalUrl.searchParams.set('_domain', domain);
   
-  return NextResponse.rewrite(storeUrl);
+  // REWRITE INTERNO: La URL visible NO cambia, solo la ruta interna
+  // Ejemplo: 
+  //   - URL visible en navegador: bellasorpresa.createam.cloud/product/123
+  //   - Ruta interna procesada: /store/product/123?_domain=bellasorpresa.createam.cloud
+  //   - El usuario ve URL limpia, pero usamos componentes de /store
+  return NextResponse.rewrite(internalUrl);
 }
 
 export const config = {
