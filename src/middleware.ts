@@ -63,10 +63,15 @@ export async function middleware(request: NextRequest) {
     internalPath = `/store${url.pathname}`;
   }
   
-  // Crear URL interna para el rewrite (NO cambia la URL visible del navegador)
-  const internalUrl = new URL(internalPath, request.url);
+  // Crear URL interna para el rewrite usando la URL base correcta
+  // Usar la URL original pero cambiar solo el pathname
+  const internalUrl = new URL(request.url);
+  internalUrl.pathname = internalPath;
   
-  // Copiar todos los query params existentes
+  // Limpiar query params existentes y agregar los necesarios
+  internalUrl.search = '';
+  
+  // Copiar todos los query params existentes de la URL original
   url.searchParams.forEach((value, key) => {
     internalUrl.searchParams.set(key, value);
   });
