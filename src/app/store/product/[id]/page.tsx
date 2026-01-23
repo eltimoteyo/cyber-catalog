@@ -14,15 +14,18 @@ interface StoreProductPageProps {
 
 export default async function StoreProductPage({ params, searchParams }: StoreProductPageProps) {
   const { id } = await params;
-  const { _domain } = await searchParams;
+  const resolvedSearchParams = await searchParams;
+  const _domain = resolvedSearchParams._domain;
 
   if (!_domain) {
+    console.error('StoreProductPage: No _domain parameter found', { searchParams: resolvedSearchParams });
     return notFound();
   }
 
   const tenant = await getTenantByDomain(_domain);
 
   if (!tenant || tenant.status !== 'active') {
+    console.error('StoreProductPage: Tenant not found or inactive', { domain: _domain, tenant });
     return notFound();
   }
 

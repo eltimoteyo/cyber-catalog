@@ -39,22 +39,29 @@ export async function middleware(request: NextRequest) {
   // Para subdominios o dominios personalizados
   // Reescribir a la ruta de tienda con el dominio como parámetro
   
-  // Si la ruta ya empieza con /store, solo agregar el parámetro _domain
-  if (url.pathname.startsWith('/store')) {
-    const storeUrl = new URL(url.pathname + url.search, request.url);
-    storeUrl.searchParams.set('_domain', domain);
-    return NextResponse.rewrite(storeUrl);
+  // Construir la URL de destino
+  let targetPath = url.pathname;
+  
+  // Si la ruta no empieza con /store, agregar el prefijo
+  if (!targetPath.startsWith('/store')) {
+    // Si es /product/[id], convertir a /store/product/[id]
+    if (targetPath.startsWith('/product/')) {
+      targetPath = `/store${targetPath}`;
+    } else {
+      // Para otras rutas (incluyendo /), usar /store
+      targetPath = `/store${targetPath === '/' ? '' : targetPath}`;
+    }
   }
   
-  // Si la ruta es /product/[id], reescribir a /store/product/[id]
-  if (url.pathname.startsWith('/product/')) {
-    const storeUrl = new URL(`/store${url.pathname}${url.search}`, request.url);
-    storeUrl.searchParams.set('_domain', domain);
-    return NextResponse.rewrite(storeUrl);
-  }
+  // Crear nueva URL con el path correcto
+  const storeUrl = new URL(targetPath, request.url);
   
-  // Para otras rutas, reescribir a /store con el dominio como query param
-  const storeUrl = new URL(`/store${url.pathname}${url.search}`, request.url);
+  // Copiar todos los query params existentes
+  url.searchParams.forEach((value, key) => {
+    storeUrl.searchParams.set(key, value);
+  });
+  
+  // Asegurar que _domain esté presente y sea el dominio correcto
   storeUrl.searchParams.set('_domain', domain);
   
   return NextResponse.rewrite(storeUrl);
