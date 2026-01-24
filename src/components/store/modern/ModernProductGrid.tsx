@@ -36,8 +36,9 @@ export default function ModernProductGrid({
   };
 
   const getSectionSubtitle = () => {
+    // No mostrar cantidad cuando hay búsqueda porque solo muestra productos cargados, no el total real
     if (searchQuery) {
-      return `${products.length} ${products.length === 1 ? 'producto encontrado' : 'productos encontrados'}`;
+      return null;
     }
     if (activeCategory === 'Todo') {
       return 'Los más vendidos';
