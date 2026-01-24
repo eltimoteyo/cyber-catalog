@@ -149,7 +149,7 @@ export default function ModernProductDetail({
     );
   }
 
-  const images = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : ['/placeholder.svg'];
+  const images: string[] = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : ['/placeholder.svg'];
 
   return (
     <div className="min-h-screen bg-[#F1F5F9]">
@@ -181,7 +181,7 @@ export default function ModernProductDetail({
           <div className="flex flex-col-reverse lg:flex-row gap-4 lg:max-h-[500px]">
             {/* Miniaturas */}
             {images.length > 1 && (
-              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 lg:pr-2 lg:w-20 shrink-0 scrollbar-hide">
+              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 lg:pr-2 lg:w-20 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {images.map((img, idx) => (
                   <button 
                     key={idx}
@@ -227,6 +227,7 @@ export default function ModernProductDetail({
                 <Share2 size={16} strokeWidth={2.5} />
               </button>
             </div>
+          </div>
 
           {/* DERECHA: Info del Producto */}
           <div className="flex flex-col justify-start">
