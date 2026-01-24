@@ -181,12 +181,12 @@ export default function ModernProductDetail({
           <div className="flex flex-col-reverse lg:flex-row gap-4 lg:max-h-[500px]">
             {/* Miniaturas */}
             {images.length > 1 && (
-              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 lg:pr-2 lg:w-20 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto p-2 lg:p-2 lg:w-24 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {images.map((img, idx) => (
                   <button 
                     key={idx}
                     onClick={() => setActiveImage(idx)}
-                    className={`relative w-16 h-16 lg:w-full lg:aspect-square rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 border-2 ${
+                    className={`relative w-20 h-20 lg:w-full lg:aspect-square rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 border-2 ${
                       activeImage === idx 
                         ? 'border-rose-500 scale-105 shadow-sm' 
                         : 'border-gray-100 hover:border-gray-200 opacity-70 hover:opacity-100'
@@ -196,7 +196,7 @@ export default function ModernProductDetail({
                       src={img} 
                       alt={`${product.name} - Vista ${idx + 1}`}
                       fill
-                      sizes="80px"
+                      sizes="96px"
                       className="object-cover"
                       loading="lazy"
                     />
@@ -212,7 +212,7 @@ export default function ModernProductDetail({
                 alt={product.name}
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-contain p-4"
+                className="object-cover"
                 priority
               />
               {product.featured && (
