@@ -206,7 +206,7 @@ export default function ModernProductDetail({
             )}
 
             {/* Imagen Principal */}
-            <div className="relative aspect-square lg:aspect-auto flex-1 h-full min-h-[300px] lg:max-h-[500px] rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
+            <div className="relative aspect-square flex-1 rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
               <Image 
                 src={images[activeImage]} 
                 alt={product.name}
