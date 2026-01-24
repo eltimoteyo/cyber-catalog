@@ -3,10 +3,12 @@
 import Image from 'next/image';
 import { Plus } from 'lucide-react';
 import { Product, TenantConfig } from '@/lib/types';
+import ProductSkeleton from './ProductSkeleton';
 
 interface ModernProductGridProps {
   products: Product[];
   loading?: boolean;
+  loadingMore?: boolean;
   onProductClick: (product: Product) => void;
   onAddToCart: (product: Product) => void;
 }
@@ -14,6 +16,7 @@ interface ModernProductGridProps {
 export default function ModernProductGrid({ 
   products, 
   loading = false,
+  loadingMore = false,
   onProductClick, 
   onAddToCart 
 }: ModernProductGridProps) {
@@ -27,7 +30,14 @@ export default function ModernProductGrid({
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 items-start">
-        {products.map(product => (
+        {loading && products.length === 0 ? (
+          // Mostrar skeletons solo en la carga inicial
+          Array.from({ length: 12 }).map((_, idx) => (
+            <ProductSkeleton key={`skeleton-${idx}`} />
+          ))
+        ) : (
+          <>
+            {products.map(product => (
           <div 
             key={product.id} 
             className="group relative cursor-pointer" 
@@ -73,7 +83,13 @@ export default function ModernProductGrid({
               </p>
             </div>
           </div>
-        ))}
+            ))}
+            {/* Skeletons para carga adicional */}
+            {loadingMore && Array.from({ length: 8 }).map((_, idx) => (
+              <ProductSkeleton key={`skeleton-more-${idx}`} />
+            ))}
+          </>
+        )}
       </div>
     </section>
   );

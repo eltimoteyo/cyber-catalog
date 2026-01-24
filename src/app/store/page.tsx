@@ -43,9 +43,9 @@ export default async function StorePage({ searchParams }: StorePageProps) {
     );
   }
 
-  // Cargar productos en el servidor (con límite para mejor rendimiento)
+  // Cargar solo 12 productos iniciales (3 filas) para optimizar primera carga y SEO
   const products = await getTenantProducts(tenant.id, tenant.firebaseConfig, {
-    limit: 50, // Límite razonable para la carga inicial
+    limit: 12, // Solo 3 filas iniciales para carga rápida
   });
 
   return (
