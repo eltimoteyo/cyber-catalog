@@ -175,18 +175,18 @@ export default function ModernProductDetail({
         </button>
 
         {/* Grid Principal: 2 Columnas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-12">
           
           {/* IZQUIERDA: Galería */}
           <div className="flex flex-col gap-4">
             {/* Imagen Principal */}
-            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden bg-white shadow-sm border border-gray-100">
+            <div className="relative aspect-square lg:aspect-auto lg:h-[500px] w-full rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
               <Image 
                 src={images[activeImage]} 
                 alt={product.name}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
+                className="object-contain"
                 priority
               />
               {product.featured && (
@@ -230,76 +230,76 @@ export default function ModernProductDetail({
           </div>
 
           {/* DERECHA: Info del Producto */}
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col justify-start">
             {/* Categoría */}
-            <div className="mb-6">
-              <span className="inline-flex items-center text-rose-600 font-black uppercase tracking-[0.2em] text-[11px] bg-rose-50 px-4 py-2 rounded-xl">
+            <div className="mb-4">
+              <span className="inline-flex items-center text-rose-600 font-black uppercase tracking-widest text-[10px] bg-rose-50 px-3 py-1.5 rounded-lg">
                 {product.category}
               </span>
             </div>
 
             {/* Título */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-[1.1] mb-6 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 leading-tight mb-4 tracking-tight">
               {product.name}
             </h1>
 
             {/* Precio */}
-            <div className="flex items-baseline gap-3 mb-8">
-              <span className="text-5xl font-black text-gray-900">
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="text-3xl font-black text-gray-900">
                 S/{product.price.toFixed(2)}
               </span>
               <div className="flex items-center gap-1 text-yellow-400">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
+                  <Star key={i} size={14} fill="currentColor" strokeWidth={0} />
                 ))}
-                <span className="text-gray-500 font-semibold text-sm ml-2">(120)</span>
+                <span className="text-gray-500 font-semibold text-xs ml-1">(120)</span>
               </div>
             </div>
 
             {/* Descripción */}
-            <p className="text-gray-600 text-base leading-relaxed mb-10">
-              {product.description || 'Producto de alta calidad, perfecto para cualquier ocasión especial. Disponible para entrega inmediata.'}
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-8 max-w-xl">
+              {product.description || 'Producto de alta calidad, perfecto para cualquier ocasión especial.'}
             </p>
 
             {/* Acciones: Cantidad + Agregar */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
               {/* Cantidad */}
-              <div className="flex items-center justify-between bg-white rounded-2xl px-6 py-4 sm:w-44 border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 sm:w-36 border border-gray-200 shadow-sm">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))} 
-                  className="p-2 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-30"
+                  className="p-1.5 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-30"
                   disabled={quantity <= 1}
                 >
-                  <Minus size={18} strokeWidth={3} />
+                  <Minus size={16} strokeWidth={3} />
                 </button>
-                <span className="font-black text-xl w-10 text-center">{quantity}</span>
+                <span className="font-black text-lg w-8 text-center">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(quantity + 1)} 
-                  className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  <Plus size={18} strokeWidth={3} />
+                  <Plus size={16} strokeWidth={3} />
                 </button>
               </div>
 
               {/* Botón Agregar */}
               <button 
                 onClick={handleAddToCart}
-                className="flex-1 bg-black text-white rounded-2xl py-5 font-black text-base hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-wide"
+                className="flex-1 bg-black text-white rounded-xl py-4 font-black text-sm hover:bg-gray-800 transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-wider"
               >
-                <ShoppingBag size={22} strokeWidth={2.5} />
+                <ShoppingBag size={20} strokeWidth={2.5} />
                 Agregar al Carrito
               </button>
             </div>
             
             {/* Garantías */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-3 bg-green-50 px-4 py-3 rounded-xl">
-                <Check size={20} className="text-green-600" strokeWidth={3} />
-                <span className="text-sm font-bold text-green-700">Stock disponible</span>
+            <div className="grid grid-cols-2 gap-3 pt-6 border-t border-gray-100">
+              <div className="flex items-center gap-2.5 bg-green-50/50 px-3 py-2.5 rounded-xl">
+                <Check size={16} className="text-green-600" strokeWidth={3} />
+                <span className="text-xs font-bold text-green-700">Stock disponible</span>
               </div>
-              <div className="flex items-center gap-3 bg-amber-50 px-4 py-3 rounded-xl">
-                <Zap size={20} className="text-amber-600" strokeWidth={3} />
-                <span className="text-sm font-bold text-amber-700">Entrega Express</span>
+              <div className="flex items-center gap-2.5 bg-amber-50/50 px-3 py-2.5 rounded-xl">
+                <Zap size={16} className="text-amber-600" strokeWidth={3} />
+                <span className="text-xs font-bold text-amber-700">Entrega Express</span>
               </div>
             </div>
           </div>
