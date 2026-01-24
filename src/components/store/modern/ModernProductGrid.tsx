@@ -9,6 +9,8 @@ interface ModernProductGridProps {
   products: Product[];
   loading?: boolean;
   loadingMore?: boolean;
+  activeCategory?: string;
+  searchQuery?: string;
   onProductClick: (product: Product) => void;
   onAddToCart: (product: Product) => void;
 }
@@ -17,16 +19,46 @@ export default function ModernProductGrid({
   products, 
   loading = false,
   loadingMore = false,
+  activeCategory = 'Todo',
+  searchQuery = '',
   onProductClick, 
   onAddToCart 
 }: ModernProductGridProps) {
+  // Generar título dinámico
+  const getSectionTitle = () => {
+    if (searchQuery) {
+      return `Resultados para "${searchQuery}"`;
+    }
+    if (activeCategory === 'Todo') {
+      return 'Populares Ahora';
+    }
+    return `${activeCategory}`;
+  };
+
+  const getSectionSubtitle = () => {
+    if (searchQuery) {
+      return `${products.length} ${products.length === 1 ? 'producto encontrado' : 'productos encontrados'}`;
+    }
+    if (activeCategory === 'Todo') {
+      return 'Los más vendidos';
+    }
+    return `Explora nuestra selección de ${activeCategory.toLowerCase()}`;
+  };
+
   return (
     <section className="container mx-auto px-4 py-6" id="productos">
       <div className="flex items-center justify-between mb-8 px-2">
-        <h2 className="text-xl md:text-2xl uppercase tracking-wider">Populares Ahora</h2>
-        <button className="text-xs md:text-sm font-bold border-b border-black pb-0.5 hover:text-rose-600 transition-colors uppercase">
-          Ver Todo
-        </button>
+        <div>
+          <h2 className="text-xl md:text-2xl uppercase tracking-wider">{getSectionTitle()}</h2>
+          {getSectionSubtitle() && (
+            <p className="text-sm text-gray-500 mt-1">{getSectionSubtitle()}</p>
+          )}
+        </div>
+        {!searchQuery && (
+          <button className="text-xs md:text-sm font-bold border-b border-black pb-0.5 hover:text-rose-600 transition-colors uppercase">
+            Ver Todo
+          </button>
+        )}
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 items-start">

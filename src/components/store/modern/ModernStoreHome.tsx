@@ -40,6 +40,7 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('Todo');
+  const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [loading, setLoading] = useState(false);
@@ -47,6 +48,7 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
   const [hasMore, setHasMore] = useState(true);
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const productosSectionRef = useRef<HTMLDivElement>(null);
 
   // Scroll detection
   useEffect(() => {
@@ -345,9 +347,34 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
     router.push(`/product/${product.id}`);
   };
 
-  const filteredProducts = activeCategory === 'Todo'
-    ? products
-    : products.filter(p => p.category === activeCategory);
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    // Si hay búsqueda, hacer scroll a la sección de productos
+    if (query.trim() && productosSectionRef.current) {
+      setTimeout(() => {
+        productosSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
+  // Filtrar productos por categoría y búsqueda
+  const filteredProducts = products.filter(product => {
+    // Filtro por categoría
+    const matchesCategory = activeCategory === 'Todo' || product.category === activeCategory;
+    
+    // Filtro por búsqueda
+    if (!searchQuery.trim()) {
+      return matchesCategory;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = 
+      product.name.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query) ||
+      product.category?.toLowerCase().includes(query);
+    
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-white">
@@ -359,6 +386,8 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
         isScrolled={isScrolled}
         onGoHome={handleGoHome}
         isProductPage={false}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
       />
 
       {/* Hero */}
@@ -368,17 +397,28 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
       <ModernCategories
         categories={categories}
         activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
+        onCategoryChange={(category) => {
+          setActiveCategory(category);
+          setSearchQuery(''); // Limpiar búsqueda al cambiar categoría
+          // Hacer scroll a productos cuando se cambia categoría
+          setTimeout(() => {
+            productosSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        }}
       />
 
       {/* Products Grid */}
-      <ModernProductGrid
-        products={filteredProducts}
-        loading={loading}
-        loadingMore={loadingMore}
-        onAddToCart={handleAddProduct}
-        onProductClick={handleProductClick}
-      />
+      <div ref={productosSectionRef}>
+        <ModernProductGrid
+          products={filteredProducts}
+          loading={loading}
+          loadingMore={loadingMore}
+          activeCategory={activeCategory}
+          searchQuery={searchQuery}
+          onAddToCart={handleAddProduct}
+          onProductClick={handleProductClick}
+        />
+      </div>
       
       {/* Trigger para infinite scroll */}
       {hasMore && <div ref={loadMoreRef} className="h-20" />}

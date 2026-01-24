@@ -24,6 +24,8 @@ interface ModernNavbarProps {
   isScrolled: boolean;
   onGoHome?: () => void;
   isProductPage?: boolean;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export default function ModernNavbar({ 
@@ -32,9 +34,30 @@ export default function ModernNavbar({
   onOpenCart, 
   isScrolled, 
   onGoHome,
-  isProductPage = false 
+  isProductPage = false,
+  searchQuery = '',
+  onSearchChange
 }: ModernNavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+
+  // Sincronizar con el prop searchQuery cuando cambia externamente
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalSearchQuery(value);
+    // Llamar inmediatamente para búsqueda en tiempo real
+    onSearchChange?.(value);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && localSearchQuery.trim()) {
+      onSearchChange?.(localSearchQuery.trim());
+    }
+  };
   
   return (
     <nav className={`fixed top-0 md:top-4 left-0 right-0 z-50 transition-all duration-300 px-0 md:px-4 flex justify-center`}>
@@ -82,6 +105,9 @@ export default function ModernNavbar({
             <input 
               type="text" 
               placeholder="¿Qué buscas hoy?" 
+              value={localSearchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
               className={`w-full py-2.5 px-3 bg-transparent border-none outline-none text-sm md:text-base font-medium transition-colors
                 ${(isScrolled || isProductPage) ? 'text-gray-900 placeholder-gray-600' : 'text-white placeholder-white/80'}
               `}
