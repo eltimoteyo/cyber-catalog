@@ -175,51 +175,28 @@ export default function ModernProductDetail({
         </button>
 
         {/* Grid Principal: 2 Columnas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-12 items-start">
           
           {/* IZQUIERDA: Galería */}
-          <div className="flex flex-col gap-4">
-            {/* Imagen Principal */}
-            <div className="relative aspect-square lg:aspect-auto lg:h-[500px] w-full rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
-              <Image 
-                src={images[activeImage]} 
-                alt={product.name}
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-contain"
-                priority
-              />
-              {product.featured && (
-                <span className="absolute top-6 left-6 bg-gradient-to-r from-rose-600 to-pink-600 text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-xl">
-                  ⭐ Destacado
-                </span>
-              )}
-              <button 
-                onClick={handleShare}
-                className="absolute top-6 right-6 p-3 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-rose-500 transition-all shadow-lg"
-              >
-                <Share2 size={18} strokeWidth={2.5} />
-              </button>
-            </div>
-            
+          <div className="flex flex-col-reverse lg:flex-row gap-4 lg:max-h-[500px]">
             {/* Miniaturas */}
             {images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
+              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 lg:pr-2 lg:w-20 shrink-0 scrollbar-hide">
                 {images.map((img, idx) => (
                   <button 
                     key={idx}
                     onClick={() => setActiveImage(idx)}
-                    className={`relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-300 border-2 ${
+                    className={`relative w-16 h-16 lg:w-full lg:aspect-square rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 border-2 ${
                       activeImage === idx 
-                        ? 'border-rose-500 scale-105 shadow-md' 
-                        : 'border-gray-200 hover:border-gray-300 opacity-70 hover:opacity-100'
+                        ? 'border-rose-500 scale-105 shadow-sm' 
+                        : 'border-gray-100 hover:border-gray-200 opacity-70 hover:opacity-100'
                     }`}
                   >
                     <Image 
                       src={img} 
                       alt={`${product.name} - Vista ${idx + 1}`}
                       fill
-                      sizes="96px"
+                      sizes="80px"
                       className="object-cover"
                       loading="lazy"
                     />
@@ -227,7 +204,29 @@ export default function ModernProductDetail({
                 ))}
               </div>
             )}
-          </div>
+
+            {/* Imagen Principal */}
+            <div className="relative aspect-square lg:aspect-auto flex-1 h-full min-h-[300px] lg:max-h-[500px] rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
+              <Image 
+                src={images[activeImage]} 
+                alt={product.name}
+                fill
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-contain p-4"
+                priority
+              />
+              {product.featured && (
+                <span className="absolute top-4 left-4 bg-gradient-to-r from-rose-600 to-pink-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg z-10">
+                  ⭐ Destacado
+                </span>
+              )}
+              <button 
+                onClick={handleShare}
+                className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-rose-500 transition-all shadow-lg z-10"
+              >
+                <Share2 size={16} strokeWidth={2.5} />
+              </button>
+            </div>
 
           {/* DERECHA: Info del Producto */}
           <div className="flex flex-col justify-start">
