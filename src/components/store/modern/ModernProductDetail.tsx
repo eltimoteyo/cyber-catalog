@@ -11,6 +11,7 @@ import ModernNavbar from './ModernNavbar';
 import ModernFooter from './ModernFooter';
 import ModernCart from './ModernCart';
 import { useCart } from '@/contexts/CartContext';
+import { getPrimaryColor, getAccentColor } from '@/lib/tenant-colors';
 
 interface ModernProductDetailProps {
   productId: string;
@@ -36,6 +37,8 @@ export default function ModernProductDetail({
   const [relatedProducts, setRelatedProducts] = useState<Product[]>(initialRelatedProducts);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const primaryColor = getPrimaryColor(tenant);
+  const accentColor = getAccentColor(tenant);
 
   // Cargar producto solo si no hay producto inicial
   useEffect(() => {
@@ -168,7 +171,13 @@ export default function ModernProductDetail({
         {/* Botón Volver */}
         <button
           onClick={handleGoHome}
-          className="flex items-center gap-2 text-gray-600 hover:text-rose-600 mb-8 transition-colors group"
+          className="flex items-center gap-2 text-gray-600 mb-8 transition-colors group"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = primaryColor;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#4B5563';
+          }}
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-bold">Volver</span>
@@ -188,9 +197,13 @@ export default function ModernProductDetail({
                     onClick={() => setActiveImage(idx)}
                     className={`relative w-20 h-20 lg:w-full lg:aspect-square rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 border-2 ${
                       activeImage === idx 
-                        ? 'border-rose-500 scale-105 shadow-sm' 
+                        ? 'scale-105 shadow-sm' 
                         : 'border-gray-100 hover:border-gray-200 opacity-70 hover:opacity-100'
                     }`}
+                    style={activeImage === idx ? {
+                      borderColor: primaryColor,
+                      borderWidth: '2px'
+                    } : {}}
                   >
                     <Image 
                       src={img} 
@@ -216,13 +229,24 @@ export default function ModernProductDetail({
                 priority
               />
               {product.featured && (
-                <span className="absolute top-4 left-4 bg-gradient-to-r from-rose-600 to-pink-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg z-10">
+                <span 
+                  className="absolute top-4 left-4 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg z-10"
+                  style={{ 
+                    background: `linear-gradient(to right, ${primaryColor}, ${accentColor})`
+                  }}
+                >
                   ⭐ Destacado
                 </span>
               )}
               <button 
                 onClick={handleShare}
-                className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-rose-500 transition-all shadow-lg z-10"
+                className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 transition-all shadow-lg z-10"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = primaryColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#4B5563';
+                }}
               >
                 <Share2 size={16} strokeWidth={2.5} />
               </button>
@@ -233,7 +257,13 @@ export default function ModernProductDetail({
           <div className="flex flex-col justify-start">
             {/* Categoría */}
             <div className="mb-4">
-              <span className="inline-flex items-center text-rose-600 font-black uppercase tracking-widest text-[10px] bg-rose-50 px-3 py-1.5 rounded-lg">
+              <span 
+                className="inline-flex items-center font-black uppercase tracking-widest text-[10px] px-3 py-1.5 rounded-lg"
+                style={{ 
+                  color: primaryColor,
+                  backgroundColor: primaryColor + '15'
+                }}
+              >
                 {product.category}
               </span>
             </div>
@@ -284,7 +314,8 @@ export default function ModernProductDetail({
               {/* Botón Agregar */}
               <button 
                 onClick={handleAddToCart}
-                className="flex-1 bg-black text-white rounded-xl py-4 font-black text-sm hover:bg-gray-800 transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-wider"
+                className="flex-1 text-white rounded-xl py-4 font-black text-sm hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-wider"
+                style={{ backgroundColor: primaryColor }}
               >
                 <ShoppingBag size={20} strokeWidth={2.5} />
                 Agregar al Carrito
@@ -328,7 +359,15 @@ export default function ModernProductDetail({
                       loading="lazy"
                     />
                   </div>
-                  <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-rose-600 transition-colors">
+                  <h4 
+                    className="text-sm font-bold text-gray-900 line-clamp-2 mb-1 transition-colors"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = primaryColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#111827';
+                    }}
+                  >
                     {p.name}
                   </h4>
                   <span className="text-base font-black text-gray-900">S/{p.price.toFixed(2)}</span>

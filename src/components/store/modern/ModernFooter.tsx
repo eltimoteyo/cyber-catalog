@@ -3,6 +3,7 @@
 import { Settings, Zap, Instagram, Facebook } from 'lucide-react';
 import Link from 'next/link';
 import { TenantConfig } from '@/lib/types';
+import { getPrimaryColor } from '@/lib/tenant-colors';
 
 const TikTokIcon = ({ size = 20 }: { size?: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 448 512" fill="currentColor">
@@ -24,7 +25,7 @@ export default function ModernFooter({ tenant }: ModernFooterProps) {
           <div className="text-center md:text-left">
             <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-3 brand-font">
               {tenant.name.split(' ')[0]}
-              <span className="text-rose-500">{tenant.name.split(' ').slice(1).join(' ')}</span>
+              <span style={{ color: getPrimaryColor(tenant) }}>{tenant.name.split(' ').slice(1).join(' ')}</span>
             </h2>
             <p className="text-gray-400 text-base">
               Creando momentos inolvidables.

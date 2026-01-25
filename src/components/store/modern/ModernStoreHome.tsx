@@ -397,6 +397,7 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
       <ModernCategories
         categories={categories}
         activeCategory={activeCategory}
+        tenant={tenant}
         onCategoryChange={(category) => {
           setActiveCategory(category);
           setSearchQuery(''); // Limpiar búsqueda al cambiar categoría
@@ -415,6 +416,7 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
           loadingMore={loadingMore}
           activeCategory={activeCategory}
           searchQuery={searchQuery}
+          tenant={tenant}
           onAddToCart={handleAddProduct}
           onProductClick={handleProductClick}
         />

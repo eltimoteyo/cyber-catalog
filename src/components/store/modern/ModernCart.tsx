@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { X, Trash2 } from 'lucide-react';
 import { Product, TenantConfig } from '@/lib/types';
+import { getPrimaryColor } from '@/lib/tenant-colors';
 
 interface CartItem extends Product {
   quantity: number;
@@ -77,7 +78,7 @@ export default function ModernCart({
                   <p className="text-xs text-gray-500 mt-1">
                     {item.quantity} x S/{item.price.toFixed(2)}
                   </p>
-                  <p className="text-sm font-bold text-rose-600 mt-1">
+                  <p className="text-sm font-bold mt-1" style={{ color: getPrimaryColor(tenant) }}>
                     S/{(item.price * item.quantity).toFixed(2)}
                   </p>
                 </div>
@@ -100,7 +101,8 @@ export default function ModernCart({
             </div>
             <button 
               onClick={handleCheckout}
-              className="block w-full bg-black text-white text-center py-4 rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-[0.98]"
+              className="block w-full text-white text-center py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg active:scale-[0.98]"
+              style={{ backgroundColor: getPrimaryColor(tenant) }}
             >
               Confirmar Pedido por WhatsApp
             </button>

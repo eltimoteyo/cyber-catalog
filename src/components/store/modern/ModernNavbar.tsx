@@ -10,6 +10,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { TenantConfig } from '@/lib/types';
+import { getPrimaryColor } from '@/lib/tenant-colors';
 
 const TikTokIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
   <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className={className} height={size} width={size} xmlns="http://www.w3.org/2000/svg">
@@ -73,42 +74,51 @@ export default function ModernNavbar({
           <a 
             href="#" 
             onClick={(e) => { e.preventDefault(); onGoHome?.(); }} 
-            className="flex items-center gap-2"
+            className="flex items-center"
           >
-            {tenant.logo ? (
+{tenant.logo && tenant.logo.trim() ? (
               <img 
                 src={tenant.logo} 
                 alt={tenant.name}
-                className="h-8 md:h-10 w-auto object-contain"
+                className="h-8 md:h-10 w-auto object-contain mr-2"
+                onError={(e) => {
+                  // Si la imagen falla al cargar, ocultarla completamente
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
-            ) : (
-              <span className={`text-lg md:text-2xl tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}>
-                <span className="md:hidden" style={{ color: tenant.colors?.primary || tenant.primaryColor || '#E11D48' }}>
-                  {tenant.name.charAt(0)}
-                </span>
-                <span className="md:hidden">
-                  {tenant.name.charAt(tenant.name.indexOf(' ') + 1 || 1)}
-                </span>
-                <span className="hidden md:inline">
-                  {tenant.name.split(' ')[0]}
-                  <span style={{ color: tenant.colors?.primary || tenant.primaryColor || '#E11D48' }}>
-                    {tenant.name.split(' ').slice(1).join(' ')}
-                  </span>
+            ) : null}
+            {/* Siempre mostrar el texto del nombre */}
+            <span className={`text-lg md:text-2xl tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}>
+              <span className="md:hidden" style={{ color: getPrimaryColor(tenant) }}>
+                {tenant.name.charAt(0)}
+              </span>
+              <span className="md:hidden">
+                {tenant.name.charAt(tenant.name.indexOf(' ') + 1 || 1)}
+              </span>
+              <span className="hidden md:inline">
+                {tenant.name.split(' ')[0]}
+                <span style={{ color: getPrimaryColor(tenant) }}>
+                  {tenant.name.split(' ').slice(1).join(' ')}
                 </span>
               </span>
-            )}
+            </span>
           </a>
         </div>
 
         {/* Buscador */}
         <div className="flex-1 max-w-2xl relative group mx-2">
-          <div className={`
-            flex items-center w-full rounded-full transition-all duration-300 overflow-hidden
-            ${(isScrolled || isProductPage) 
-              ? 'bg-white/50 focus-within:bg-white/80 focus-within:ring-2 ring-rose-500/20' 
-              : 'bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30'
-            }
-          `}>
+          <div 
+            className={`
+              flex items-center w-full rounded-full transition-all duration-300 overflow-hidden
+              ${(isScrolled || isProductPage) 
+                ? 'bg-white/50 focus-within:bg-white/80 focus-within:ring-2' 
+                : 'bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30'
+              }
+            `}
+            style={(isScrolled || isProductPage) ? { 
+              '--tw-ring-color': getPrimaryColor(tenant) + '33' 
+            } as React.CSSProperties : {}}
+          >
             <div className={`pl-3 md:pl-4 ${(isScrolled || isProductPage) ? 'text-gray-600' : 'text-white'}`}>
               <Search size={18} />
             </div>
@@ -135,14 +145,20 @@ export default function ModernNavbar({
                 rel="noopener noreferrer"
                 className="transition-all duration-200 hover:scale-110"
               >
-                <TikTokIcon 
-                  size={26} 
-                  className={`transition-colors ${
-                    (isScrolled || isProductPage) 
-                      ? 'text-gray-700 hover:text-rose-600' 
-                      : 'text-white hover:text-rose-400'
-                  }`}
-                />
+                <div
+                  className="transition-colors"
+                  style={{
+                    color: (isScrolled || isProductPage) ? '#374151' : 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = getPrimaryColor(tenant);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = (isScrolled || isProductPage) ? '#374151' : 'white';
+                  }}
+                >
+                  <TikTokIcon size={26} />
+                </div>
               </a>
             )}
             {tenant.socialMedia?.instagram && (
@@ -152,15 +168,20 @@ export default function ModernNavbar({
                 rel="noopener noreferrer"
                 className="transition-all duration-200 hover:scale-110"
               >
-                <Instagram 
-                  size={26} 
-                  strokeWidth={2.5}
-                  className={`transition-colors ${
-                    (isScrolled || isProductPage) 
-                      ? 'text-gray-700 hover:text-rose-600' 
-                      : 'text-white hover:text-rose-400'
-                  }`}
-                />
+                <div
+                  className="transition-colors"
+                  style={{
+                    color: (isScrolled || isProductPage) ? '#374151' : 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = getPrimaryColor(tenant);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = (isScrolled || isProductPage) ? '#374151' : 'white';
+                  }}
+                >
+                  <Instagram size={26} strokeWidth={2.5} />
+                </div>
               </a>
             )}
             {tenant.socialMedia?.facebook && (
@@ -170,15 +191,20 @@ export default function ModernNavbar({
                 rel="noopener noreferrer"
                 className="transition-all duration-200 hover:scale-110"
               >
-                <Facebook 
-                  size={26} 
-                  strokeWidth={2.5}
-                  className={`transition-colors ${
-                    (isScrolled || isProductPage) 
-                      ? 'text-gray-700 hover:text-rose-600' 
-                      : 'text-white hover:text-rose-400'
-                  }`}
-                />
+                <div
+                  className="transition-colors"
+                  style={{
+                    color: (isScrolled || isProductPage) ? '#374151' : 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = getPrimaryColor(tenant);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = (isScrolled || isProductPage) ? '#374151' : 'white';
+                  }}
+                >
+                  <Facebook size={26} strokeWidth={2.5} />
+                </div>
               </a>
             )}
             {tenant.whatsapp && (
@@ -188,15 +214,20 @@ export default function ModernNavbar({
                 rel="noopener noreferrer"
                 className="transition-all duration-200 hover:scale-110"
               >
-                <MessageCircle 
-                  size={26} 
-                  strokeWidth={2.5}
-                  className={`transition-colors ${
-                    (isScrolled || isProductPage) 
-                      ? 'text-gray-700 hover:text-rose-600' 
-                      : 'text-white hover:text-rose-400'
-                  }`}
-                />
+                <div
+                  className="transition-colors"
+                  style={{
+                    color: (isScrolled || isProductPage) ? '#374151' : 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = getPrimaryColor(tenant);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = (isScrolled || isProductPage) ? '#374151' : 'white';
+                  }}
+                >
+                  <MessageCircle size={26} strokeWidth={2.5} />
+                </div>
               </a>
             )}
           </div>
@@ -266,10 +297,17 @@ export default function ModernNavbar({
             )}
           </div>
 
-          <button onClick={onOpenCart} className="relative p-2.5 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 active:scale-95 transition-all">
+          <button 
+            onClick={onOpenCart} 
+            className="relative p-2.5 rounded-full text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
+            style={{ backgroundColor: getPrimaryColor(tenant) }}
+          >
             <ShoppingBag size={20} />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 bg-white text-rose-600 text-[10px] font-bold flex items-center justify-center rounded-full shadow-sm border border-gray-100">
+              <span 
+                className="absolute -top-1 -right-1 h-5 w-5 bg-white text-[10px] font-bold flex items-center justify-center rounded-full shadow-sm border border-gray-100"
+                style={{ color: getPrimaryColor(tenant) }}
+              >
                 {cartCount}
               </span>
             )}

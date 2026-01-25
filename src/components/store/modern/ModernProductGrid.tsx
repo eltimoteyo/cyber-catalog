@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Plus } from 'lucide-react';
 import { Product, TenantConfig } from '@/lib/types';
 import ProductSkeleton from './ProductSkeleton';
+import { getPrimaryColor } from '@/lib/tenant-colors';
 
 interface ModernProductGridProps {
   products: Product[];
@@ -11,6 +12,7 @@ interface ModernProductGridProps {
   loadingMore?: boolean;
   activeCategory?: string;
   searchQuery?: string;
+  tenant: TenantConfig;
   onProductClick: (product: Product) => void;
   onAddToCart: (product: Product) => void;
 }
@@ -21,9 +23,11 @@ export default function ModernProductGrid({
   loadingMore = false,
   activeCategory = 'Todo',
   searchQuery = '',
+  tenant,
   onProductClick, 
   onAddToCart 
 }: ModernProductGridProps) {
+  const primaryColor = getPrimaryColor(tenant);
   // Generar título dinámico
   const getSectionTitle = () => {
     if (searchQuery) {
@@ -56,7 +60,16 @@ export default function ModernProductGrid({
           )}
         </div>
         {!searchQuery && (
-          <button className="text-xs md:text-sm font-bold border-b border-black pb-0.5 hover:text-rose-600 transition-colors uppercase">
+          <button 
+            className="text-xs md:text-sm font-bold border-b border-black pb-0.5 transition-colors uppercase"
+            style={{ '--hover-color': primaryColor } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = primaryColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '';
+            }}
+          >
             Ver Todo
           </button>
         )}
@@ -90,7 +103,16 @@ export default function ModernProductGrid({
                   e.stopPropagation(); 
                   onAddToCart(product); 
                 }} 
-                className="absolute bottom-3 right-3 w-10 h-10 bg-white text-rose-600 rounded-full shadow-lg flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all active:scale-95 z-20"
+                className="absolute bottom-3 right-3 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 z-20"
+                style={{ color: primaryColor }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = primaryColor;
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = primaryColor;
+                }}
               >
                 <Plus size={20} strokeWidth={3} />
               </button>
@@ -104,7 +126,15 @@ export default function ModernProductGrid({
             </div>
             <div>
               <div className="flex justify-between items-start mb-1 gap-2">
-                <h3 className="text-sm font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors font-body flex-1">
+                <h3 
+                  className="text-sm font-medium text-gray-800 leading-snug line-clamp-2 transition-colors font-body flex-1"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = primaryColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#1F2937';
+                  }}
+                >
                   {product.name}
                 </h3>
                 <span className="font-bold text-gray-900 text-sm whitespace-nowrap bg-gray-50 px-2 py-0.5 rounded-md self-start">
