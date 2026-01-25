@@ -73,20 +73,30 @@ export default function ModernNavbar({
           <a 
             href="#" 
             onClick={(e) => { e.preventDefault(); onGoHome?.(); }} 
-            className={`text-lg md:text-2xl tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}
+            className="flex items-center gap-2"
           >
-            <span className="md:hidden text-rose-600">
-              {tenant.name.charAt(0)}
-            </span>
-            <span className="md:hidden">
-              {tenant.name.charAt(tenant.name.indexOf(' ') + 1 || 1)}
-            </span>
-            <span className="hidden md:inline">
-              {tenant.name.split(' ')[0]}
-              <span className={(isScrolled || isProductPage) ? "text-rose-500" : "text-rose-400"}>
-                {tenant.name.split(' ').slice(1).join(' ')}
+            {tenant.logo ? (
+              <img 
+                src={tenant.logo} 
+                alt={tenant.name}
+                className="h-8 md:h-10 w-auto object-contain"
+              />
+            ) : (
+              <span className={`text-lg md:text-2xl tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}>
+                <span className="md:hidden" style={{ color: tenant.colors?.primary || tenant.primaryColor || '#E11D48' }}>
+                  {tenant.name.charAt(0)}
+                </span>
+                <span className="md:hidden">
+                  {tenant.name.charAt(tenant.name.indexOf(' ') + 1 || 1)}
+                </span>
+                <span className="hidden md:inline">
+                  {tenant.name.split(' ')[0]}
+                  <span style={{ color: tenant.colors?.primary || tenant.primaryColor || '#E11D48' }}>
+                    {tenant.name.split(' ').slice(1).join(' ')}
+                  </span>
+                </span>
               </span>
-            </span>
+            )}
           </a>
         </div>
 

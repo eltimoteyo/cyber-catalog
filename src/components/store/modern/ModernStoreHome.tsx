@@ -391,7 +391,7 @@ export default function ModernStoreHome({ tenant, domain, initialProducts = [] }
       />
 
       {/* Hero */}
-      <ModernHero />
+      <ModernHero tenant={tenant} />
 
       {/* Categories */}
       <ModernCategories

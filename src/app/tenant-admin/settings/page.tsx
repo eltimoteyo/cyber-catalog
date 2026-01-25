@@ -7,7 +7,7 @@ import { TenantConfig } from '@/lib/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Upload, Save, Palette, Globe, Hash, MessageCircle, Instagram, Facebook, Music2, Loader2 } from 'lucide-react';
+import { Upload, Save, Palette, Globe, Hash, MessageCircle, Instagram, Facebook, Music2, Loader2, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
 
 function SettingsContent() {
   const { user } = useAuth();
@@ -19,11 +19,22 @@ function SettingsContent() {
   // Form states
   const [name, setName] = useState('');
   const [domain, setDomain] = useState('');
+  const [logo, setLogo] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#E11D48');
+  const [secondaryColor, setSecondaryColor] = useState('#F43F5E');
+  const [accentColor, setAccentColor] = useState('#FB7185');
   const [whatsapp, setWhatsapp] = useState('');
   const [instagram, setInstagram] = useState('');
   const [facebook, setFacebook] = useState('');
   const [tiktok, setTiktok] = useState('');
+  const [heroSlides, setHeroSlides] = useState<Array<{
+    id: string;
+    image: string;
+    title: string;
+    subtitle: string;
+    buttonText: string;
+    order?: number;
+  }>>([]);
 
   useEffect(() => {
     const loadTenant = async () => {
@@ -49,11 +60,15 @@ function SettingsContent() {
         setTenant(tenantData);
         setName(tenantData.name || '');
         setDomain(tenantData.domain || '');
-        setPrimaryColor(tenantData.primaryColor || '#E11D48');
+        setLogo(tenantData.logo || '');
+        setPrimaryColor(tenantData.colors?.primary || tenantData.primaryColor || '#E11D48');
+        setSecondaryColor(tenantData.colors?.secondary || '#F43F5E');
+        setAccentColor(tenantData.colors?.accent || '#FB7185');
         setWhatsapp(tenantData.whatsapp || '');
         setInstagram(tenantData.socialMedia?.instagram || '');
         setFacebook(tenantData.socialMedia?.facebook || '');
         setTiktok(tenantData.socialMedia?.tiktok || '');
+        setHeroSlides(tenantData.heroSlides || []);
         setError(null);
       } catch (err: any) {
         console.error('Error al cargar tenant:', err);
@@ -77,13 +92,23 @@ function SettingsContent() {
       await updateDoc(doc(centralDb, 'tenants', user.tenantId), {
         name,
         domain,
+        logo,
         primaryColor,
+        colors: {
+          primary: primaryColor,
+          secondary: secondaryColor,
+          accent: accentColor,
+        },
         whatsapp,
         socialMedia: {
           instagram,
           facebook,
           tiktok,
         },
+        heroSlides: heroSlides.map((slide, index) => ({
+          ...slide,
+          order: index,
+        })),
         updatedAt: new Date().toISOString(),
       });
 
@@ -94,9 +119,16 @@ function SettingsContent() {
         ...tenant,
         name,
         domain,
+        logo,
         primaryColor,
+        colors: {
+          primary: primaryColor,
+          secondary: secondaryColor,
+          accent: accentColor,
+        },
         whatsapp,
         socialMedia: { instagram, facebook, tiktok },
+        heroSlides,
       });
     } catch (err: any) {
       console.error('Error al guardar:', err);
@@ -170,14 +202,36 @@ function SettingsContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Nombre de la Tienda</label>
+              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Nombre de la Tienda (Solo lectura)</label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-gray-50 rounded-2xl px-5 py-3.5 font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
+                disabled
+                className="w-full bg-gray-100 rounded-2xl px-5 py-3.5 font-semibold text-gray-500 outline-none cursor-not-allowed"
                 placeholder="Ej: Bella Sorpresa"
               />
+              <p className="text-xs text-gray-400 ml-1">El nombre de la tienda no se puede modificar desde aquí</p>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Logo (URL)</label>
+              <div className="relative">
+                <input
+                  type="url"
+                  value={logo}
+                  onChange={(e) => setLogo(e.target.value)}
+                  className="w-full bg-gray-50 rounded-2xl pl-10 pr-5 py-3.5 font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
+                  placeholder="https://ejemplo.com/logo.png"
+                />
+                <ImageIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
+              {logo && (
+                <div className="mt-2">
+                  <img src={logo} alt="Logo preview" className="h-16 w-auto object-contain rounded-lg border border-gray-200" onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }} />
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -196,39 +250,77 @@ function SettingsContent() {
           </div>
         </div>
 
-        {/* Color Primario */}
+        {/* Colores */}
         <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
               <Palette size={20} className="text-purple-600" strokeWidth={2.5} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Color Primario</h2>
-              <p className="text-sm text-gray-500">Define el color de tu marca</p>
+              <h2 className="text-xl font-bold text-gray-900">Colores de la Marca</h2>
+              <p className="text-sm text-gray-500">Define la paleta de colores de tu tienda</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <input
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="w-20 h-20 rounded-2xl cursor-pointer border-4 border-gray-100 shadow-sm"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <Hash size={16} className="text-gray-400" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Color Primario */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600">Color Primario</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="w-16 h-16 rounded-xl cursor-pointer border-2 border-gray-200 shadow-sm"
+                />
                 <input
                   type="text"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="flex-1 bg-gray-50 rounded-xl px-4 py-2.5 font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="flex-1 bg-gray-50 rounded-xl px-3 py-2 font-mono text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-purple-500/20"
                   placeholder="#E11D48"
                 />
               </div>
-              <p className="text-xs text-gray-400 font-medium">Este color se usará en botones, enlaces y elementos destacados.</p>
+            </div>
+
+            {/* Color Secundario */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600">Color Secundario</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  className="w-16 h-16 rounded-xl cursor-pointer border-2 border-gray-200 shadow-sm"
+                />
+                <input
+                  type="text"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  className="flex-1 bg-gray-50 rounded-xl px-3 py-2 font-mono text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-purple-500/20"
+                  placeholder="#F43F5E"
+                />
+              </div>
+            </div>
+
+            {/* Color Acento */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600">Color Acento</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="w-16 h-16 rounded-xl cursor-pointer border-2 border-gray-200 shadow-sm"
+                />
+                <input
+                  type="text"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="flex-1 bg-gray-50 rounded-xl px-3 py-2 font-mono text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-purple-500/20"
+                  placeholder="#FB7185"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -301,6 +393,130 @@ function SettingsContent() {
                 <Music2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" />
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Hero Slides */}
+        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+                <ImageIcon size={20} className="text-orange-600" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Banners del Carrusel</h2>
+                <p className="text-sm text-gray-500">Configura las imágenes del carrusel principal</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const newSlide = {
+                  id: Date.now().toString(),
+                  image: '',
+                  title: '',
+                  subtitle: '',
+                  buttonText: 'Ver Más',
+                  order: heroSlides.length,
+                };
+                setHeroSlides([...heroSlides, newSlide]);
+              }}
+              className="px-4 py-2 bg-black text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-all flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Agregar Slide
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {heroSlides.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No hay slides configurados. Agrega uno para comenzar.</p>
+              </div>
+            ) : (
+              heroSlides.map((slide, index) => (
+                <div key={slide.id} className="border-2 border-gray-200 rounded-xl p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-gray-900">Slide {index + 1}</h3>
+                    <button
+                      onClick={() => setHeroSlides(heroSlides.filter(s => s.id !== slide.id))}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-600">URL de la Imagen</label>
+                      <input
+                        type="url"
+                        value={slide.image}
+                        onChange={(e) => {
+                          const updated = [...heroSlides];
+                          updated[index].image = e.target.value;
+                          setHeroSlides(updated);
+                        }}
+                        className="w-full bg-gray-50 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-orange-500/20"
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                      />
+                      {slide.image && (
+                        <div className="mt-2">
+                          <img src={slide.image} alt={`Slide ${index + 1}`} className="h-32 w-full object-cover rounded-lg border border-gray-200" onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }} />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-600">Título</label>
+                      <input
+                        type="text"
+                        value={slide.title}
+                        onChange={(e) => {
+                          const updated = [...heroSlides];
+                          updated[index].title = e.target.value;
+                          setHeroSlides(updated);
+                        }}
+                        className="w-full bg-gray-50 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-orange-500/20"
+                        placeholder="Ej: REGALA EMOCIONES"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-600">Subtítulo</label>
+                      <input
+                        type="text"
+                        value={slide.subtitle}
+                        onChange={(e) => {
+                          const updated = [...heroSlides];
+                          updated[index].subtitle = e.target.value;
+                          setHeroSlides(updated);
+                        }}
+                        className="w-full bg-gray-50 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-orange-500/20"
+                        placeholder="Ej: Nueva Colección 2025"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-600">Texto del Botón</label>
+                      <input
+                        type="text"
+                        value={slide.buttonText}
+                        onChange={(e) => {
+                          const updated = [...heroSlides];
+                          updated[index].buttonText = e.target.value;
+                          setHeroSlides(updated);
+                        }}
+                        className="w-full bg-gray-50 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-orange-500/20"
+                        placeholder="Ej: Ver Más"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

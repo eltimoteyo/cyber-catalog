@@ -19,6 +19,16 @@ export interface TenantConfig {
     accent?: string;
   };
   
+  // Hero carousel slides
+  heroSlides?: Array<{
+    id: string;
+    image: string;
+    title: string;
+    subtitle: string;
+    buttonText: string;
+    order?: number;
+  }>;
+  
   // Configuración Firebase del tenant
   firebaseConfig: {
     apiKey: string;
