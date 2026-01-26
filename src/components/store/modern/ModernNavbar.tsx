@@ -41,11 +41,17 @@ export default function ModernNavbar({
 }: ModernNavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+  const [logoError, setLogoError] = useState(false);
 
   // Sincronizar con el prop searchQuery cuando cambia externamente
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
+
+  // Reset logo error cuando cambia el tenant o el logo
+  useEffect(() => {
+    setLogoError(false);
+  }, [tenant.logo]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -76,14 +82,19 @@ export default function ModernNavbar({
             onClick={(e) => { e.preventDefault(); onGoHome?.(); }} 
             className="flex items-center"
           >
-{tenant.logo && tenant.logo.trim() ? (
+            {/* Mostrar imagen solo si hay logo válido y no ha fallado */}
+            {tenant.logo && tenant.logo.trim() && !logoError ? (
               <img 
                 src={tenant.logo} 
                 alt={tenant.name}
                 className="h-8 md:h-10 w-auto object-contain mr-2"
-                onError={(e) => {
-                  // Si la imagen falla al cargar, ocultarla completamente
-                  (e.target as HTMLImageElement).style.display = 'none';
+                onError={() => {
+                  // Si la imagen falla al cargar, marcar error y no mostrar
+                  setLogoError(true);
+                }}
+                onLoad={() => {
+                  // Si la imagen carga correctamente, asegurar que no hay error
+                  setLogoError(false);
                 }}
               />
             ) : null}
