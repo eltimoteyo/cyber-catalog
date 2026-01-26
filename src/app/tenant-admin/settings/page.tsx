@@ -18,7 +18,9 @@ function SettingsContent() {
 
   // Form states
   const [name, setName] = useState('');
+  const [domainType, setDomainType] = useState<'custom' | 'subdomain'>('subdomain');
   const [domain, setDomain] = useState('');
+  const [subdomain, setSubdomain] = useState('');
   const [logo, setLogo] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#E11D48');
   const [secondaryColor, setSecondaryColor] = useState('#F43F5E');
@@ -59,7 +61,26 @@ function SettingsContent() {
         
         setTenant(tenantData);
         setName(tenantData.name || '');
-        setDomain(tenantData.domain || '');
+        
+        // Determinar tipo de dominio
+        const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || 'createam.cloud';
+        const hasCustomDomain = tenantData.domain && !tenantData.domain.endsWith(`.${platformDomain}`);
+        
+        if (hasCustomDomain) {
+          setDomainType('custom');
+          setDomain(tenantData.domain || '');
+          setSubdomain('');
+        } else {
+          setDomainType('subdomain');
+          setSubdomain(tenantData.subdomain || '');
+          // Si tiene domain pero es subdominio, extraer el nombre
+          if (tenantData.domain && tenantData.domain.endsWith(`.${platformDomain}`)) {
+            const subdomainName = tenantData.domain.replace(`.${platformDomain}`, '');
+            setSubdomain(subdomainName);
+          }
+          setDomain(tenantData.subdomain ? `${tenantData.subdomain}.${platformDomain}` : '');
+        }
+        
         setLogo(tenantData.logo || '');
         setPrimaryColor(tenantData.colors?.primary || tenantData.primaryColor || '#E11D48');
         setSecondaryColor(tenantData.colors?.secondary || '#F43F5E');
@@ -89,9 +110,11 @@ function SettingsContent() {
 
     setLoading(true);
     try {
-      await updateDoc(doc(centralDb, 'tenants', user.tenantId), {
+      const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || 'createam.cloud';
+      
+      // Preparar datos según el tipo de dominio
+      const updateData: any = {
         name,
-        domain,
         logo,
         primaryColor,
         colors: {
@@ -110,15 +133,29 @@ function SettingsContent() {
           order: index,
         })),
         updatedAt: new Date().toISOString(),
-      });
+      };
+      
+      // Configurar dominio según el tipo
+      if (domainType === 'custom') {
+        updateData.domain = domain;
+        updateData.subdomain = null;
+      } else {
+        // Subdominio
+        updateData.subdomain = subdomain;
+        updateData.domain = subdomain ? `${subdomain}.${platformDomain}` : null;
+      }
+      
+      await updateDoc(doc(centralDb, 'tenants', user.tenantId), updateData);
 
       toast.success('Configuración guardada exitosamente');
       
       // Actualizar el estado local
+      const updatedDomain = domainType === 'custom' ? domain : (subdomain ? `${subdomain}.${platformDomain}` : '');
       setTenant({
         ...tenant,
         name,
-        domain,
+        domain: updatedDomain,
+        subdomain: domainType === 'subdomain' ? subdomain : undefined,
         logo,
         primaryColor,
         colors: {
@@ -235,18 +272,90 @@ function SettingsContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Dominio</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                  className="w-full bg-gray-50 rounded-2xl pl-10 pr-5 py-3.5 font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
-                  placeholder="mitienda.com"
-                />
-                <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Tipo de Dominio</label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDomainType('subdomain');
+                    setDomain('');
+                  }}
+                  className={`flex-1 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    domainType === 'subdomain'
+                      ? 'bg-black text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Subdominio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDomainType('custom');
+                    setSubdomain('');
+                  }}
+                  className={`flex-1 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    domainType === 'custom'
+                      ? 'bg-black text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Dominio Personalizado
+                </button>
               </div>
             </div>
+
+            {domainType === 'subdomain' ? (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Nombre del Subdominio</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={subdomain}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                        setSubdomain(value);
+                        const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || 'createam.cloud';
+                        setDomain(value ? `${value}.${platformDomain}` : '');
+                      }}
+                      className="w-full bg-gray-50 rounded-2xl pl-10 pr-5 py-3.5 font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
+                      placeholder="mitienda"
+                    />
+                    <Hash size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">URL Completa (Solo lectura)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={domain}
+                      disabled
+                      className="w-full bg-gray-100 rounded-2xl pl-10 pr-5 py-3.5 font-semibold text-gray-500 outline-none cursor-not-allowed"
+                      placeholder="mitienda.createam.cloud"
+                    />
+                    <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
+                  <p className="text-xs text-gray-400 ml-1">La URL completa se genera automáticamente</p>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Dominio Personalizado</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    className="w-full bg-gray-50 rounded-2xl pl-10 pr-5 py-3.5 font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
+                    placeholder="mitienda.com"
+                  />
+                  <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                </div>
+                <p className="text-xs text-gray-400 ml-1">Ingresa tu dominio completo (ej: mitienda.com)</p>
+              </div>
+            )}
           </div>
         </div>
 
