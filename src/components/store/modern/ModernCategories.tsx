@@ -48,29 +48,43 @@ export default function ModernCategories({
               className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all whitespace-nowrap snap-start border ${
                 isActive
                   ? 'text-white shadow-lg scale-105' 
-                  : 'bg-white border-gray-200 text-gray-600'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
               style={isActive ? {
                 backgroundColor: primaryColor,
                 borderColor: primaryColor,
-              } : {}}
+                color: 'white',
+              } : {
+                backgroundColor: 'white',
+                borderColor: '#E5E7EB',
+                color: '#4B5563',
+              }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.borderColor = accentColor;
+                  e.currentTarget.style.borderColor = accentColor || primaryColor;
                   e.currentTarget.style.color = primaryColor;
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.borderColor = '';
-                  e.currentTarget.style.color = '';
+                  e.currentTarget.style.borderColor = '#E5E7EB';
+                  e.currentTarget.style.color = '#4B5563';
                 }
               }}
             >
-              <span style={{ color: isActive ? 'white' : '#9CA3AF' }}>
+              <span style={{ 
+                color: isActive ? 'white' : '#9CA3AF',
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}>
                 {cat.icon}
               </span>
-              <span className="text-sm font-bold tracking-wide">{cat.label}</span>
+              <span 
+                className="text-sm font-bold tracking-wide"
+                style={{ color: isActive ? 'white' : 'inherit' }}
+              >
+                {cat.label}
+              </span>
             </button>
           );
         })}
