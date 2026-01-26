@@ -22,6 +22,9 @@ function SettingsContent() {
   const [domain, setDomain] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [logo, setLogo] = useState('');
+  // Valores originales para restaurar al cambiar de tipo
+  const [originalCustomDomain, setOriginalCustomDomain] = useState('');
+  const [originalSubdomain, setOriginalSubdomain] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#E11D48');
   const [secondaryColor, setSecondaryColor] = useState('#F43F5E');
   const [accentColor, setAccentColor] = useState('#FB7185');
@@ -67,18 +70,25 @@ function SettingsContent() {
         const hasCustomDomain = tenantData.domain && !tenantData.domain.endsWith(`.${platformDomain}`);
         
         if (hasCustomDomain) {
+          // Dominio personalizado
           setDomainType('custom');
-          setDomain(tenantData.domain || '');
+          const customDomain = tenantData.domain || '';
+          setDomain(customDomain);
+          setOriginalCustomDomain(customDomain);
           setSubdomain('');
+          setOriginalSubdomain('');
         } else {
+          // Subdominio
           setDomainType('subdomain');
-          setSubdomain(tenantData.subdomain || '');
+          let subdomainName = tenantData.subdomain || '';
           // Si tiene domain pero es subdominio, extraer el nombre
           if (tenantData.domain && tenantData.domain.endsWith(`.${platformDomain}`)) {
-            const subdomainName = tenantData.domain.replace(`.${platformDomain}`, '');
-            setSubdomain(subdomainName);
+            subdomainName = tenantData.domain.replace(`.${platformDomain}`, '');
           }
-          setDomain(tenantData.subdomain ? `${tenantData.subdomain}.${platformDomain}` : '');
+          setSubdomain(subdomainName);
+          setOriginalSubdomain(subdomainName);
+          setDomain(subdomainName ? `${subdomainName}.${platformDomain}` : '');
+          setOriginalCustomDomain('');
         }
         
         setLogo(tenantData.logo || '');
@@ -278,7 +288,11 @@ function SettingsContent() {
                   type="button"
                   onClick={() => {
                     setDomainType('subdomain');
-                    setDomain('');
+                    // Restaurar subdominio original o dejar vacío
+                    setSubdomain(originalSubdomain);
+                    // Actualizar domain con el subdominio completo
+                    const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || 'createam.cloud';
+                    setDomain(originalSubdomain ? `${originalSubdomain}.${platformDomain}` : '');
                   }}
                   className={`flex-1 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
                     domainType === 'subdomain'
@@ -292,6 +306,9 @@ function SettingsContent() {
                   type="button"
                   onClick={() => {
                     setDomainType('custom');
+                    // Restaurar dominio personalizado original o dejar vacío
+                    setDomain(originalCustomDomain);
+                    // Limpiar subdominio
                     setSubdomain('');
                   }}
                   className={`flex-1 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
