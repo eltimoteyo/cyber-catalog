@@ -18,7 +18,12 @@ import { TenantConfig, TenantStatus, TenantRegistration } from './types';
  */
 export async function getTenantByDomain(domain: string): Promise<TenantConfig | null> {
   try {
-    // Primero intentar buscar por dominio personalizado
+    // Extraer el subdominio si es un subdominio de la plataforma
+    const platformDomain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || 'createam.cloud';
+    const isSubdomain = domain.endsWith(`.${platformDomain}`);
+    const subdomainPart = isSubdomain ? domain.split('.')[0] : null;
+    
+    // Primero intentar buscar por dominio personalizado exacto
     const domainQuery = query(
       collection(centralDb, 'tenants'),
       where('domain', '==', domain),
@@ -27,21 +32,49 @@ export async function getTenantByDomain(domain: string): Promise<TenantConfig | 
     
     let snapshot = await getDocs(domainQuery);
     
-    // Si no se encuentra, buscar por subdominio
-    if (snapshot.empty) {
+    // Si no se encuentra y es un subdominio, buscar por subdominio
+    if (snapshot.empty && subdomainPart) {
       const subdomainQuery = query(
         collection(centralDb, 'tenants'),
-        where('subdomain', '==', domain.split('.')[0]),
+        where('subdomain', '==', subdomainPart),
         where('status', '==', 'active')
       );
       snapshot = await getDocs(subdomainQuery);
     }
     
+    // Si aún no se encuentra y es un subdominio, buscar por nombre del tenant
+    // (para casos donde el subdomain no está configurado pero el nombre coincide)
+    if (snapshot.empty && subdomainPart) {
+      // Obtener todos los tenants activos y buscar por nombre similar
+      const allTenantsQuery = query(
+        collection(centralDb, 'tenants'),
+        where('status', '==', 'active')
+      );
+      const allSnapshot = await getDocs(allTenantsQuery);
+      
+      // Buscar tenant cuyo nombre normalizado coincida con el subdominio
+      const normalizedSubdomain = subdomainPart.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      for (const doc of allSnapshot.docs) {
+        const data = doc.data();
+        const normalizedName = (data.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Si el nombre normalizado contiene el subdominio o viceversa
+        if (normalizedName.includes(normalizedSubdomain) || normalizedSubdomain.includes(normalizedName)) {
+          snapshot = { docs: [doc], empty: false } as any;
+          break;
+        }
+      }
+    }
+    
     if (snapshot.empty) {
+      console.log(`[getTenantByDomain] No se encontró tenant para dominio: ${domain}`);
       return null;
     }
     
     const data = snapshot.docs[0].data();
+    console.log(`[getTenantByDomain] Tenant encontrado: ${data.name} (${snapshot.docs[0].id}) para dominio: ${domain}`);
+    
     return {
       id: snapshot.docs[0].id,
       ...data,
