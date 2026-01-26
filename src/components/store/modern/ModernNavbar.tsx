@@ -39,18 +39,45 @@ export default function ModernNavbar({
   searchQuery = '',
   onSearchChange
 }: ModernNavbarProps) {
+  // Función para validar si hay un logo válido
+  const hasValidLogo = (logoUrl?: string) => {
+    if (!logoUrl) return false;
+    const trimmedLogo = logoUrl.trim();
+    if (!trimmedLogo) return false;
+    // Validar que sea una URL válida
+    try {
+      const url = new URL(trimmedLogo);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-  const [logoError, setLogoError] = useState(false);
+  // Inicializar logoError basado en si hay logo válido
+  const [logoError, setLogoError] = useState(!hasValidLogo(tenant.logo));
+  const [logoLoaded, setLogoLoaded] = useState(false);
+
+  const validLogo = hasValidLogo(tenant.logo);
 
   // Sincronizar con el prop searchQuery cuando cambia externamente
   useEffect(() => {
     setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
 
-  // Reset logo error cuando cambia el tenant o el logo
+  // Reset logo error y loaded cuando cambia el tenant o el logo
   useEffect(() => {
-    setLogoError(false);
+    const isValid = hasValidLogo(tenant.logo);
+    if (!isValid) {
+      // Si no hay logo válido, marcar error inmediatamente y no intentar cargar
+      setLogoError(true);
+      setLogoLoaded(false);
+    } else {
+      // Si hay logo válido, resetear estados para intentar cargar
+      setLogoError(false);
+      setLogoLoaded(false);
+    }
   }, [tenant.logo]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,34 +110,39 @@ export default function ModernNavbar({
             className="flex items-center"
           >
             {/* Mostrar imagen solo si hay logo válido y no ha fallado */}
-            {tenant.logo && tenant.logo.trim() && !logoError ? (
+            {validLogo && !logoError ? (
               <img 
-                src={tenant.logo} 
+                src={tenant.logo!.trim()} 
                 alt={tenant.name}
                 className="h-8 md:h-10 w-auto object-contain mr-2"
                 onError={() => {
-                  // Si la imagen falla al cargar, marcar error y no mostrar
+                  // Si la imagen falla al cargar, marcar error y ocultar
                   setLogoError(true);
                 }}
                 onLoad={() => {
-                  // Si la imagen carga correctamente, asegurar que no hay error
+                  // Si la imagen carga correctamente, marcar como cargada
+                  setLogoLoaded(true);
                   setLogoError(false);
                 }}
               />
             ) : null}
-            {/* Siempre mostrar el texto del nombre */}
-            <span className={`text-lg md:text-2xl tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}>
-              <span className="md:hidden" style={{ color: getPrimaryColor(tenant) }}>
+            {/* Siempre mostrar el texto del nombre - solo una versión según el tamaño de pantalla */}
+            {/* Versión móvil - solo primera letra con color, resto normal */}
+            <span className={`md:hidden text-lg tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}>
+              <span style={{ color: getPrimaryColor(tenant) }}>
                 {tenant.name.charAt(0)}
               </span>
-              <span className="md:hidden">
-                {tenant.name.charAt(tenant.name.indexOf(' ') + 1 || 1)}
+              <span>
+                {tenant.name.substring(1)}
               </span>
-              <span className="hidden md:inline">
+            </span>
+            {/* Versión desktop - primera palabra normal, resto con color */}
+            <span className={`hidden md:inline text-2xl tracking-tight brand-font transition-colors ${(isScrolled || isProductPage) ? 'text-gray-900' : 'text-white'}`}>
+              <span>
                 {tenant.name.split(' ')[0]}
-                <span style={{ color: getPrimaryColor(tenant) }}>
-                  {tenant.name.split(' ').slice(1).join(' ')}
-                </span>
+              </span>
+              <span style={{ color: getPrimaryColor(tenant) }}>
+                {' ' + tenant.name.split(' ').slice(1).join(' ')}
               </span>
             </span>
           </a>
