@@ -35,15 +35,36 @@ async function updateBellaSorpresaTenant() {
     console.log('🔍 Buscando tenant de Bella Sorpresa...');
     
     // Buscar tenant por dominio
-    const q = query(
+    let q = query(
       collection(db, 'tenants'),
       where('domain', '==', 'bellasorpresa.pe')
     );
     
-    const snapshot = await getDocs(q);
+    let snapshot = await getDocs(q);
+    
+    // Si no se encuentra por dominio, buscar por nombre
+    if (snapshot.empty) {
+      console.log('⚠️  No se encontró por dominio, buscando por nombre...');
+      q = query(
+        collection(db, 'tenants')
+      );
+      snapshot = await getDocs(q);
+      
+      // Buscar por nombre que contenga "Bella" o "bellasorpresa"
+      const matchingDoc = snapshot.docs.find(doc => {
+        const data = doc.data();
+        const name = (data.name || '').toLowerCase();
+        return name.includes('bella') || name.includes('bellasorpresa');
+      });
+      
+      if (matchingDoc) {
+        snapshot = { docs: [matchingDoc], empty: false };
+      }
+    }
     
     if (snapshot.empty) {
       console.log('❌ No se encontró el tenant de Bella Sorpresa');
+      console.log('💡 Asegúrate de que el tenant exista en Firestore');
       return;
     }
     
@@ -53,11 +74,15 @@ async function updateBellaSorpresaTenant() {
     
     console.log('✅ Tenant encontrado:', tenantId);
     console.log('📝 Nombre:', currentData.name);
-    console.log('🌐 Dominio:', currentData.domain);
+    console.log('🌐 Dominio:', currentData.domain || '(no configurado)');
+    console.log('🔗 Subdominio:', currentData.subdomain || '(no configurado)');
+    console.log('📊 Status:', currentData.status || '(no configurado)');
     
     // Actualizar con las credenciales correctas
     const updates = {
       firebaseConfig: bellaSorpresaFirebaseConfig,
+      subdomain: 'bellasorpresa', // IMPORTANTE: Configurar subdominio para bellasorpresa.createam.cloud
+      status: 'active', // Asegurar que esté activo
       socialMedia: {
         tiktok: 'https://www.tiktok.com/@bellasorpresa.pe',
         instagram: 'https://www.instagram.com/bellasorpresa.pe',
@@ -69,9 +94,12 @@ async function updateBellaSorpresaTenant() {
     
     await updateDoc(doc(db, 'tenants', tenantId), updates);
     
-    console.log('✅ Tenant actualizado correctamente');
+    console.log('\n✅ Tenant actualizado correctamente');
     console.log('🔥 Firebase Config:', bellaSorpresaFirebaseConfig.projectId);
+    console.log('🔗 Subdominio configurado: bellasorpresa');
+    console.log('📊 Status: active');
     console.log('📱 Redes sociales configuradas');
+    console.log('\n💡 Ahora deberías poder acceder a: https://bellasorpresa.createam.cloud/');
     
     process.exit(0);
   } catch (error) {
