@@ -18,6 +18,9 @@ COPY . .
 # Variables de entorno para el build
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Asegurar que el directorio public existe
+RUN mkdir -p public
+
 # Build de Next.js
 RUN npm run build
 
@@ -34,7 +37,8 @@ RUN adduser --system --uid 1001 nextjs
 # Copiar archivos necesarios
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+# Crear directorio public vacío (Next.js funciona sin archivos en public)
+RUN mkdir -p ./public && chown nextjs:nodejs ./public
 
 USER nextjs
 
