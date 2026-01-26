@@ -40,6 +40,42 @@ export async function uploadProductImage(
 }
 
 /**
+ * Sube el logo del tenant a Firebase Storage
+ */
+export async function uploadLogoImage(
+  storage: FirebaseStorage,
+  tenantId: string,
+  file: File
+): Promise<string> {
+  const timestamp = Date.now();
+  const filename = `logo_${timestamp}_${file.name}`;
+  const storageRef = ref(storage, `branding/${tenantId}/${filename}`);
+  
+  await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(storageRef);
+  
+  return downloadURL;
+}
+
+/**
+ * Sube una imagen de banner del carrusel a Firebase Storage
+ */
+export async function uploadBannerImage(
+  storage: FirebaseStorage,
+  tenantId: string,
+  file: File
+): Promise<string> {
+  const timestamp = Date.now();
+  const filename = `banner_${timestamp}_${file.name}`;
+  const storageRef = ref(storage, `branding/${tenantId}/banners/${filename}`);
+  
+  await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(storageRef);
+  
+  return downloadURL;
+}
+
+/**
  * Elimina una imagen de Firebase Storage
  */
 export async function deleteProductImage(

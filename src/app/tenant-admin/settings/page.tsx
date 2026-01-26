@@ -7,13 +7,17 @@ import { TenantConfig } from '@/lib/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Upload, Save, Palette, Globe, Hash, MessageCircle, Instagram, Facebook, Music2, Loader2, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
+import { Upload, Save, Palette, Globe, Hash, MessageCircle, Instagram, Facebook, Music2, Loader2, Image as ImageIcon, Plus, Trash2, X, Info } from 'lucide-react';
+import { initTenantFirebase } from '@/lib/firebase';
+import { uploadLogoImage, uploadBannerImage } from '@/lib/products';
 
 function SettingsContent() {
   const { user } = useAuth();
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [loadingTenant, setLoadingTenant] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState<{ [key: string]: boolean }>({});
   const [error, setError] = useState<string | null>(null);
 
   // Form states
@@ -261,17 +265,73 @@ function SettingsContent() {
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Logo (URL)</label>
+              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest ml-1">Logo</label>
+              
+              {/* Recomendaciones */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+                <div className="flex items-start gap-2">
+                  <Info size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-blue-800">
+                    <p className="font-bold mb-1">Recomendaciones:</p>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      <li>Tamaño: 200x200px a 400x400px (cuadrado)</li>
+                      <li>Formato: PNG con fondo transparente o JPG</li>
+                      <li>Peso máximo: 500KB</li>
+                      <li>Resolución: 72-150 DPI</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Opción de subir archivo */}
+              <div className="mb-3">
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-rose-300 transition-colors bg-white">
+                  {uploadingLogo ? (
+                    <Loader2 size={24} className="text-gray-400 mb-2 animate-spin" />
+                  ) : (
+                    <Upload size={24} className="text-gray-400 mb-2" />
+                  )}
+                  <span className="text-sm text-gray-600 font-medium">
+                    {uploadingLogo ? 'Subiendo...' : 'Subir Logo'}
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !tenant) return;
+                      
+                      setUploadingLogo(true);
+                      try {
+                        const { storage } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
+                        const url = await uploadLogoImage(storage, tenant.id, file);
+                        setLogo(url);
+                        toast.success('Logo subido exitosamente');
+                      } catch (error) {
+                        console.error('Error uploading logo:', error);
+                        toast.error('Error al subir el logo');
+                      } finally {
+                        setUploadingLogo(false);
+                      }
+                    }}
+                    disabled={uploadingLogo}
+                  />
+                </label>
+              </div>
+
+              {/* Opción de URL */}
               <div className="relative">
                 <input
                   type="url"
                   value={logo}
                   onChange={(e) => setLogo(e.target.value)}
                   className="w-full bg-gray-50 rounded-2xl pl-10 pr-5 py-3.5 font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
-                  placeholder="https://ejemplo.com/logo.png"
+                  placeholder="O ingresa una URL del logo"
                 />
                 <ImageIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
+              
               {logo && (
                 <div className="mt-2">
                   <img src={logo} alt="Logo preview" className="h-16 w-auto object-contain rounded-lg border border-gray-200" onError={(e) => {
@@ -534,6 +594,26 @@ function SettingsContent() {
                 <p className="text-sm text-gray-500">Configura las imágenes del carrusel principal</p>
               </div>
             </div>
+          </div>
+
+          {/* Recomendaciones para banners */}
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
+            <div className="flex items-start gap-2">
+              <Info size={16} className="text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-orange-800">
+                <p className="font-bold mb-1">Recomendaciones para Banners:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>Tamaño: 1920x800px (16:7) o 1920x600px (16:5)</li>
+                  <li>Formato: JPG o PNG</li>
+                  <li>Peso máximo: 1MB por imagen</li>
+                  <li>Resolución: 72-150 DPI</li>
+                  <li>Mantén el texto importante en el centro (zona segura)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end mb-4">
             <button
               onClick={() => {
                 const newSlide = {
@@ -574,7 +654,48 @@ function SettingsContent() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-600">URL de la Imagen</label>
+                      <label className="text-xs font-bold text-gray-600">Imagen del Banner</label>
+                      
+                      {/* Opción de subir archivo */}
+                      <div className="mb-2">
+                        <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-orange-300 transition-colors bg-white">
+                          {uploadingBanner[slide.id] ? (
+                            <Loader2 size={20} className="text-gray-400 mb-1 animate-spin" />
+                          ) : (
+                            <Upload size={20} className="text-gray-400 mb-1" />
+                          )}
+                          <span className="text-xs text-gray-600 font-medium">
+                            {uploadingBanner[slide.id] ? 'Subiendo...' : 'Subir Imagen'}
+                          </span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !tenant) return;
+                              
+                              setUploadingBanner({ ...uploadingBanner, [slide.id]: true });
+                              try {
+                                const { storage } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
+                                const url = await uploadBannerImage(storage, tenant.id, file);
+                                const updated = [...heroSlides];
+                                updated[index].image = url;
+                                setHeroSlides(updated);
+                                toast.success('Imagen subida exitosamente');
+                              } catch (error) {
+                                console.error('Error uploading banner:', error);
+                                toast.error('Error al subir la imagen');
+                              } finally {
+                                setUploadingBanner({ ...uploadingBanner, [slide.id]: false });
+                              }
+                            }}
+                            disabled={uploadingBanner[slide.id]}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Opción de URL */}
                       <input
                         type="url"
                         value={slide.image}
@@ -584,7 +705,7 @@ function SettingsContent() {
                           setHeroSlides(updated);
                         }}
                         className="w-full bg-gray-50 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-orange-500/20"
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        placeholder="O ingresa una URL de la imagen"
                       />
                       {slide.image && (
                         <div className="mt-2">
