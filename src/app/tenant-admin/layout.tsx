@@ -2,9 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutGrid, Package, Layers, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import { LayoutGrid, Package, Layers, Settings as SettingsIcon, LogOut, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { logout } from '@/lib/auth';
@@ -21,6 +21,8 @@ function TenantAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     try {
@@ -31,6 +33,23 @@ function TenantAdminLayout({ children }: { children: React.ReactNode }) {
       toast.error('Error al cerrar sesión');
     }
   };
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   const getActiveTab = () => {
     if (pathname === '/tenant-admin') return 'home';
@@ -79,7 +98,7 @@ function TenantAdminLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl px-6 py-3 flex justify-between items-center z-40 shadow-2xl shadow-black/5">
+      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl px-4 py-3 flex justify-between items-center z-40 shadow-2xl shadow-black/5">
         {MENU.map(item => (
           <button
             key={item.id}
@@ -93,6 +112,44 @@ function TenantAdminLayout({ children }: { children: React.ReactNode }) {
             </div>
           </button>
         ))}
+        
+        {/* Botón de Usuario en móvil */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex flex-col items-center gap-1 transition-all duration-300 text-gray-400"
+          >
+            <div className="p-2 rounded-xl bg-transparent">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-xs">
+                {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+              </div>
+            </div>
+          </button>
+          
+          {/* Menú desplegable del usuario */}
+          {showUserMenu && (
+            <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+              <div className="p-3 border-b border-gray-100">
+                <p className="text-xs font-bold text-gray-800 truncate">
+                  {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
+                </p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                  {user?.role === 'owner' ? 'Propietario' : 'Administrador'}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserMenu(false);
+                  handleLogout();
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={16} />
+                Cerrar Sesión
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

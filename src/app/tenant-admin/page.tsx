@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, MousePointerClick, Package, Plus, ChevronDown } from 'lucide-react';
+import { Eye, MousePointerClick, Package, Plus, ChevronDown, LogOut } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { centralDb } from '@/lib/firebase';
 import { TenantConfig } from '@/lib/types';
+import { logout } from '@/lib/auth';
+import { toast } from 'sonner';
 
 const MOCK_METRICS = [
   { label: "Vistas Totales", value: "3.2k", trend: "+12%", icon: Eye, color: "bg-blue-50 text-blue-600" },
@@ -18,6 +20,35 @@ export default function TenantAdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sesión cerrada');
+      router.push('/login');
+    } catch (error) {
+      toast.error('Error al cerrar sesión');
+    }
+  };
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   useEffect(() => {
     const loadTenant = async () => {
@@ -46,19 +77,51 @@ export default function TenantAdminDashboard() {
             <p className="text-gray-500 font-medium text-sm mt-1">Resumen de actividad.</p>
           </div>
           
-          <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-sm">
-              {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'A'}
-            </div>
-            <div className="text-left">
-              <span className="block text-xs font-bold text-gray-800">
-                {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
-              </span>
-              <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wide">
-                {user?.role === 'owner' ? 'Propietario' : 'Administrador'}
-              </span>
-            </div>
-            <ChevronDown size={14} className="text-gray-400" />
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-sm">
+                {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+              </div>
+              <div className="text-left hidden sm:block">
+                <span className="block text-xs font-bold text-gray-800">
+                  {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
+                </span>
+                <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wide">
+                  {user?.role === 'owner' ? 'Propietario' : 'Administrador'}
+                </span>
+              </div>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {/* Menú desplegable del usuario */}
+            {showUserMenu && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                <div className="p-4 border-b border-gray-100">
+                  <p className="text-sm font-bold text-gray-800 truncate">
+                    {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
+                  </p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mt-1">
+                    {user?.role === 'owner' ? 'Propietario' : 'Administrador'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
