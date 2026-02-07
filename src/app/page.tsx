@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from "next/link";
+import Image from "next/image";
 import {
   Layers,
   LayoutDashboard,
@@ -43,8 +44,36 @@ import {
   Cpu,
   Download,
   Stethoscope,
-  Activity
+  Activity,
+  Lightbulb,
+  Cloud
 } from 'lucide-react';
+
+// --- COMPONENTE LOGO ONTURN ---
+const Logo = ({ dark = false, size = "md" }) => {
+  const primaryColor = "#00A896"; // Turquesa
+  const secondaryColor = dark ? "#FFFFFF" : "#003366"; // Azul/Blanco
+  
+  const iconHeight = size === "lg" ? 40 : 28;
+  const iconWidth = size === "lg" ? 64 : 44;
+  const fontSize = size === "lg" ? "text-4xl" : "text-2xl";
+  const strokeWidth = size === "lg" ? 3 : 2.5;
+
+  return (
+    <div className="flex items-center gap-0.5 select-none tracking-tighter">
+      <div className="flex items-center justify-center mr-0.5">
+        <svg width={iconWidth} height={iconHeight} viewBox="0 0 44 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1.5" y="1.5" width="41" height="25" rx="12.5" stroke={primaryColor} strokeWidth={strokeWidth} fill="none" />
+            <circle cx="31" cy="14" r="7" fill={primaryColor} />
+        </svg>
+      </div>
+      <div className="flex items-center pb-1">
+          <span className={`${fontSize} font-extrabold`} style={{ color: primaryColor, marginLeft: -2 }}>n</span>
+          <span className={`${fontSize} font-extrabold`} style={{ color: secondaryColor }}>Turn</span>
+      </div>
+    </div>
+  );
+};
 
 export default function HomePage() {
   const [scrollY, setScrollY] = useState(0);
@@ -118,32 +147,27 @@ export default function HomePage() {
         <div className="container mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center space-x-3 group cursor-pointer">
             <div className="relative">
-              <div className="w-11 h-11 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 transform rotate-12 group-hover:rotate-0 transition-all duration-500">
-                <Zap className="text-white fill-current" size={22} />
+              <div className="w-14 h-14 flex items-center justify-center transform group-hover:scale-110 transition-all duration-500">
+                <Image 
+                  src="/images/createam-cloud-logo.svg" 
+                  alt="Createam Logo" 
+                  width={56} 
+                  height={56}
+                  className="w-full h-full object-contain"
+                />
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tighter leading-none">
-                CREATEAM<span className="text-cyan-400">.CLOUD</span>
-              </span>
-              <span className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] leading-none mt-1.5">
-                by createam.io
+              <span className="text-3xl font-black tracking-tight leading-none">
+                Createam
               </span>
             </div>
           </div>
 
           <div className="hidden lg:flex items-center space-x-10 text-[11px] font-bold uppercase tracking-[0.2em]">
-            <a href="#on-turn" className="hover:text-cyan-400 transition-colors">OnTurn</a>
-            <a href="#catalogo" className="hover:text-cyan-400 transition-colors">Catálogo</a>
-            <a href="#erp" className="hover:text-cyan-400 transition-colors">ERP Modular</a>
-            <a href="https://createam.io" target="_blank" className="text-gray-500 hover:text-white transition-all flex items-center gap-2">
-              Engineering <ExternalLink size={14} />
-            </a>
-            <Link href="/login">
-              <button className="bg-white text-black px-8 py-3 rounded-full font-black hover:bg-cyan-400 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-white/5">
-                Acceso Cliente
-              </button>
-            </Link>
+            <a href="#on-turn" className="hover:text-cyan-400 transition-colors">Gestión de Turnos</a>
+            <a href="#catalogo" className="hover:text-cyan-400 transition-colors">Catálogo Digital</a>
+            <a href="#erp" className="hover:text-cyan-400 transition-colors">POS Integral</a>
           </div>
 
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-white">
@@ -158,12 +182,9 @@ export default function HomePage() {
           <button onClick={() => setIsMenuOpen(false)} className="absolute top-8 right-8 text-white">
             <X size={32} />
           </button>
-          <a href="#on-turn" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black hover:text-cyan-400 transition-colors">OnTurn</a>
-          <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black hover:text-cyan-400 transition-colors">Catálogo</a>
-          <a href="#erp" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black hover:text-cyan-400 transition-colors">ERP Modular</a>
-          <Link href="/login">
-            <button className="bg-cyan-400 text-black px-12 py-4 rounded-full font-black text-xl shadow-xl shadow-cyan-400/20">Acceso Cliente</button>
-          </Link>
+          <a href="#on-turn" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black hover:text-cyan-400 transition-colors">Gestión de Turnos</a>
+          <a href="#catalogo" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black hover:text-cyan-400 transition-colors">Catálogo Digital</a>
+          <a href="#erp" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black hover:text-cyan-400 transition-colors">POS Integral</a>
         </div>
       )}
 
@@ -214,13 +235,11 @@ export default function HomePage() {
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-20">
             <div className="lg:w-1/2">
-              <div className="w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-[2rem] flex items-center justify-center mb-10 border border-cyan-500/30 shadow-[0_0_50px_rgba(34,211,238,0.15)] group relative overflow-hidden">
-                <Clock className="text-cyan-400 group-hover:scale-110 transition-transform duration-500" size={40} />
-                <div className="absolute inset-0 bg-cyan-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+              <div className="mb-10">
+                <Logo size="lg" />
               </div>
 
               <h2 className="text-5xl md:text-7xl font-black mb-8 tracking-tighter leading-tight">
-                OnTurn: <br />
                 <span className="text-cyan-400">El tiempo en tus manos.</span>
               </h2>
 
@@ -303,7 +322,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Estado en Vivo</p>
-                    <p className="font-black text-white">PACIENTE EN ATENCIÓN</p>
+                    <p className="font-black text-white">EN ATENCIÓN</p>
                   </div>
                 </div>
               </div>
@@ -317,7 +336,7 @@ export default function HomePage() {
                       <Menu className="text-white" size={20} />
                       <div className="w-8 h-8 rounded-full bg-white/20"></div>
                     </div>
-                    <h3 className="text-white font-black text-2xl tracking-tight">OnTurn App</h3>
+                    <h3 className="text-white font-black text-2xl tracking-tight">OnTurn</h3>
                     <p className="text-cyan-200 text-xs font-bold mt-1">Hola, Ana García</p>
                   </div>
 
@@ -330,7 +349,7 @@ export default function HomePage() {
                         <Zap size={14} className="text-cyan-400" />
                       </div>
                       <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-1">Turno Actual</p>
-                      <h4 className="text-white font-black">Clínica San Borja</h4>
+                      <h4 className="text-white font-black">Consultorio general</h4>
                       <div className="flex items-baseline gap-2 mt-4">
                         <span className="text-4xl font-black text-white">A-24</span>
                         <span className="text-xs text-gray-500 font-bold">Posición: 2</span>
@@ -349,7 +368,7 @@ export default function HomePage() {
                     {/* Medical History Section */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Historial Médico</p>
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Historial de turnos</p>
                         <span className="text-[9px] text-cyan-400 font-bold">Ver Todo</span>
                       </div>
                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
@@ -407,9 +426,6 @@ export default function HomePage() {
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row-reverse items-center gap-20">
             <div className="lg:w-1/2">
-              <div className="w-16 h-16 bg-fuchsia-500/20 rounded-2xl flex items-center justify-center mb-8 border border-fuchsia-500/20 shadow-[0_0_20px_rgba(217,70,239,0.2)]">
-                <Smartphone className="text-fuchsia-400" size={32} />
-              </div>
               <h2 className="text-5xl font-black mb-6 tracking-tight leading-tight">Catálogo Digital: <br /> <span className="text-fuchsia-500">Más ventas, cero comisiones.</span></h2>
 
               <p className="text-xl text-white font-medium mb-6">Tu tienda virtual propia, personalizada y conectada a WhatsApp.</p>
@@ -432,7 +448,7 @@ export default function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
                 <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
                   <div className="text-fuchsia-400 bg-fuchsia-400/10 p-2 rounded-lg"><LinkIcon size={18} /></div>
-                  <span className="text-xs font-bold text-gray-300">Dominio Propio o .cloud</span>
+                  <span className="text-xs font-bold text-gray-300">Dominio Propio o subdominio</span>
                 </div>
                 <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
                   <div className="text-fuchsia-400 bg-fuchsia-400/10 p-2 rounded-lg"><Palette size={18} /></div>
@@ -509,11 +525,14 @@ export default function HomePage() {
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-24">
             <h2 className="text-4xl md:text-7xl font-black mb-6 tracking-tighter">
-              Ecosistema <span className="text-cyan-500">Modular</span>
+              Ecosistema <span className="text-cyan-500">POS Modular</span>
             </h2>
-            <p className="text-gray-500 max-w-3xl mx-auto text-lg font-medium">
+            <p className="text-gray-500 max-w-3xl mx-auto text-lg font-medium mb-8">
               Todo lo que tu negocio necesita en una sola nube. Activa solo lo que usas: desde una bodega básica hasta un restaurante con <b>inteligencia robótica</b>.
             </p>
+            <button className="px-10 py-5 bg-cyan-400 text-black rounded-full font-black uppercase tracking-widest text-sm hover:bg-white hover:text-[#003366] transition-all inline-flex items-center gap-3 shadow-2xl shadow-cyan-400/20 group">
+              Ver Planes y Precios <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-16 items-start">
