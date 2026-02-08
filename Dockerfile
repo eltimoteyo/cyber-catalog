@@ -37,8 +37,8 @@ RUN adduser --system --uid 1001 nextjs
 # Copiar archivos necesarios
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-# Crear directorio public vacío (Next.js funciona sin archivos en public)
-RUN mkdir -p ./public && chown nextjs:nodejs ./public
+# Copiar archivos públicos (logo, favicon, etc.)
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 
