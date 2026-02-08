@@ -535,24 +535,24 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-16 items-start">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
             {/* Sidebar ERP */}
-            <div className="lg:col-span-4 space-y-4 sticky top-32">
+            <div className="lg:col-span-4 space-y-3 lg:space-y-4 lg:sticky lg:top-32">
               {Object.entries(erpModules).map(([key, mod]) => (
                 <button
                   key={key}
                   onClick={() => setActiveErpModule(key)}
-                  className={`group w-full text-left p-6 rounded-3xl border transition-all duration-500 flex items-center gap-6 ${activeErpModule === key
+                  className={`group w-full text-left p-4 lg:p-6 rounded-2xl lg:rounded-3xl border transition-all duration-500 flex items-center gap-3 lg:gap-6 ${activeErpModule === key
                     ? 'bg-gradient-to-r from-white/10 to-transparent border-white/20 shadow-2xl'
                     : 'bg-transparent border-transparent opacity-40 hover:opacity-100'
                     }`}
                 >
-                  <div className={`p-4 rounded-2xl transition-all duration-500 ${activeErpModule === key ? `bg-gradient-to-br ${mod.color} text-white scale-110 shadow-lg` : 'bg-white/5 text-gray-500'}`}>
-                    {React.cloneElement(mod.icon as React.ReactElement, { size: 24 })}
+                  <div className={`p-3 lg:p-4 rounded-xl lg:rounded-2xl transition-all duration-500 flex-shrink-0 ${activeErpModule === key ? `bg-gradient-to-br ${mod.color} text-white scale-110 shadow-lg` : 'bg-white/5 text-gray-500'}`}>
+                    {React.cloneElement(mod.icon as React.ReactElement, { size: 20 })}
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-xl font-black">{mod.title}</h4>
-                    {activeErpModule === key && <p className="text-[11px] text-gray-400 mt-1 font-bold leading-tight">{mod.desc}</p>}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base lg:text-xl font-black truncate">{mod.title}</h4>
+                    {activeErpModule === key && <p className="text-[10px] lg:text-[11px] text-gray-400 mt-1 font-bold leading-tight line-clamp-2">{mod.desc}</p>}
                   </div>
                 </button>
               ))}
