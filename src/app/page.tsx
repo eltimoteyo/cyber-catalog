@@ -158,13 +158,13 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-3xl font-black tracking-tight leading-none">
+              <span className="text-3xl font-black tracking-tight leading-none" style={{ fontFamily: '"Days One", sans-serif' }}>
                 Createam
               </span>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center space-x-10 text-[11px] font-bold uppercase tracking-[0.2em]">
+          <div className="hidden lg:flex items-center space-x-10 text-[11px] font-bold uppercase tracking-[0.2em]" style={{ fontFamily: '"Days One", sans-serif' }}>
             <a href="#on-turn" className="hover:text-cyan-400 transition-colors">Gestión de Turnos</a>
             <a href="#catalogo" className="hover:text-cyan-400 transition-colors">Catálogo Digital</a>
             <a href="#erp" className="hover:text-cyan-400 transition-colors">POS Integral</a>
@@ -178,7 +178,7 @@ export default function HomePage() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#020408] flex flex-col items-center justify-center space-y-8 animate-fade-in lg:hidden">
+        <div className="fixed inset-0 z-[60] bg-[#020408] flex flex-col items-center justify-center space-y-8 animate-fade-in lg:hidden" style={{ fontFamily: '"Days One", sans-serif' }}>
           <button onClick={() => setIsMenuOpen(false)} className="absolute top-8 right-8 text-white">
             <X size={32} />
           </button>
@@ -189,14 +189,14 @@ export default function HomePage() {
       )}
 
       {/* HERO SECTION */}
-      <header className="relative pt-64 pb-32 min-h-[90vh] flex flex-col items-center">
+      <header className="relative pt-32 md:pt-64 pb-32 min-h-[90vh] flex flex-col items-center">
         <div className="container mx-auto px-6 text-center z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8 animate-fade-in">
             <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
             Ecosistema de Soluciones Cloud
           </div>
 
-          <h1 className="text-4xl md:text-9xl font-black mb-8 tracking-tighter leading-[0.85] animate-slide-up">
+          <h1 className="text-6xl md:text-9xl font-black mb-8 tracking-tighter leading-[0.85] animate-slide-up">
             Tu negocio, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-blue-500">
               sin fronteras.
@@ -613,18 +613,18 @@ export default function HomePage() {
 
       {/* FOOTER / CREATEAM.IO */}
       <footer className="pt-32 pb-16 relative">
-        <div className="container mx-auto px-6">
-          <div className="relative rounded-[4rem] bg-gradient-to-tr from-[#0a0c10] to-[#020408] border border-white/5 p-16 overflow-hidden">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="relative rounded-[4rem] bg-gradient-to-tr from-[#0a0c10] to-[#020408] border border-white/5 p-8 md:p-16 overflow-hidden">
             <div className="absolute -top-24 -right-24 opacity-[0.05] text-cyan-500 pointer-events-none">
               <Cpu size={500} />
             </div>
 
             <div className="relative z-10 max-w-2xl">
-              <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-black mb-8 leading-tight">
                 Ingeniería que trasciende <br />
                 <span className="text-cyan-400">bajo tus propias reglas.</span>
               </h2>
-              <p className="text-xl text-gray-400 mb-12 leading-relaxed font-medium">
+              <p className="text-lg md:text-xl text-gray-400 mb-12 leading-relaxed font-medium">
                 ¿Buscas una solución a medida? Nuestro equipo elite en <b>createam.io</b> construye arquitecturas únicas para los desafíos más complejos.
               </p>
               <a

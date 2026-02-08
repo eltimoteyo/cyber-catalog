@@ -133,13 +133,13 @@ export default function RegistroPage() {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-3xl font-black tracking-tight leading-none">
+              <span className="text-3xl font-black tracking-tight leading-none" style={{ fontFamily: '"Days One", sans-serif' }}>
                 Createam
               </span>
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center space-x-10 text-[11px] font-bold uppercase tracking-[0.2em]">
+          <div className="hidden lg:flex items-center space-x-10 text-[11px] font-bold uppercase tracking-[0.2em]" style={{ fontFamily: '"Days One", sans-serif' }}>
             <a href="/#on-turn" className="hover:text-cyan-400 transition-colors">Gestión de Turnos</a>
             <a href="/#catalogo" className="hover:text-cyan-400 transition-colors">Catálogo Digital</a>
             <a href="/#erp" className="hover:text-cyan-400 transition-colors">POS Integral</a>
@@ -153,7 +153,7 @@ export default function RegistroPage() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#020408] flex flex-col items-center justify-center space-y-8 animate-fade-in lg:hidden">
+        <div className="fixed inset-0 z-[60] bg-[#020408] flex flex-col items-center justify-center space-y-8 animate-fade-in lg:hidden" style={{ fontFamily: '"Days One", sans-serif' }}>
           <button onClick={() => setIsMenuOpen(false)} className="absolute top-8 right-8 text-white">
             <X size={32} />
           </button>
@@ -164,8 +164,8 @@ export default function RegistroPage() {
       )}
 
       {/* Main Content */}
-      <main className="relative pt-28 pb-10 px-4">
-        <div className="container mx-auto max-w-2xl relative z-10">
+      <main className="relative pt-28 pb-10 px-2 md:px-4">
+        <div className="container mx-auto max-w-2xl relative z-10 px-0">
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
             <div className="text-center p-6 border-b border-white/10">
               <div className="flex items-center justify-center gap-3 mb-3">
