@@ -551,7 +551,7 @@ export default function HomePage() {
                     {React.cloneElement(mod.icon as React.ReactElement, { size: 20 })}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-base lg:text-xl font-black truncate">{mod.title}</h4>
+                    <h4 className="text-base lg:text-xl font-black leading-tight">{mod.title}</h4>
                     {activeErpModule === key && <p className="text-[10px] lg:text-[11px] text-gray-400 mt-1 font-bold leading-tight line-clamp-2">{mod.desc}</p>}
                   </div>
                 </button>
