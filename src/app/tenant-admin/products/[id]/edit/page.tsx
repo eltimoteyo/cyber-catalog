@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter, useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,22 +9,51 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import Link from "next/link";
-import { getTenantByDomain } from "@/lib/tenants";
+import { useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { auth } from "@/lib/auth";
 import { initTenantFirebase } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
-import { updateProduct, uploadProductImage, deleteProductImage } from "@/lib/products";
-import { Category, Product } from "@/lib/types";
+import { uploadProductImage } from "@/lib/products";
+import { Category, Product, TenantConfig } from "@/lib/types";
 import { toast } from "sonner";
 
-export default function EditProductPage() {
-  const searchParams = useSearchParams();
+async function tenantApiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const token = await auth.currentUser?.getIdToken(true);
+
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  const headers = new Headers(options.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+
+  if (options.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Error en API tenant-admin');
+  }
+
+  return payload as T;
+}
+
+function EditProductContent() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
   const productId = params.id as string;
-  const domain = searchParams.get('_domain') || 'localhost';
   
   const [loading, setLoading] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(true);
+  const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<File[]>([]);
@@ -38,21 +67,25 @@ export default function EditProductPage() {
   });
 
   useEffect(() => {
-    loadProduct();
-    loadCategories();
-  }, [productId, domain]);
+    if (user?.tenantId && productId) {
+      loadTenantData(productId);
+    }
+  }, [user, productId]);
 
-  async function loadProduct() {
+  async function loadTenantData(targetProductId: string) {
     try {
-      const tenant = await getTenantByDomain(domain);
-      if (!tenant) return;
-      
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
-      const docRef = doc(db, 'products', productId);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const product = docSnap.data() as Product;
+      const settings = await tenantApiFetch<{ tenant: TenantConfig }>('/api/tenant-admin/settings');
+      const tenantData = settings.tenant;
+      setTenant(tenantData);
+
+      const categoriesResponse = await tenantApiFetch<{ categories: Category[] }>('/api/tenant-admin/categories');
+      const cats = categoriesResponse.categories || [];
+      setCategories(cats);
+
+      const productResponse = await tenantApiFetch<{ product: Product }>(`/api/tenant-admin/products/${targetProductId}`);
+      const product = productResponse.product;
+
+      if (product) {
         setFormData({
           name: product.name,
           description: product.description || "",
@@ -61,31 +94,15 @@ export default function EditProductPage() {
           featured: product.featured || false,
         });
         setExistingImages(product.imageUrls || []);
+      } else {
+        toast.error('Producto no encontrado');
+        router.push('/tenant-admin/products');
       }
     } catch (error) {
-      console.error("Error loading product:", error);
-      toast.error("Error al cargar producto");
+      console.error("Error loading tenant data:", error);
+      toast.error("Error al cargar datos del producto");
     } finally {
       setLoadingProduct(false);
-    }
-  }
-
-  async function loadCategories() {
-    try {
-      const tenant = await getTenantByDomain(domain);
-      if (!tenant) return;
-      
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
-      const snapshot = await getDocs(collection(db, 'categories'));
-      
-      const cats = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Category[];
-      
-      setCategories(cats);
-    } catch (error) {
-      console.error("Error loading categories:", error);
     }
   }
 
@@ -118,10 +135,9 @@ export default function EditProductPage() {
     setLoading(true);
 
     try {
-      const tenant = await getTenantByDomain(domain);
       if (!tenant) throw new Error("Tenant not found");
       
-      const { db, storage } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
+      const { storage } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
       
       // Subir nuevas imágenes
       const newImageUrls: string[] = [];
@@ -134,13 +150,16 @@ export default function EditProductPage() {
       const allImageUrls = [...existingImages, ...newImageUrls];
       
       // Actualizar producto
-      await updateProduct(db, productId, {
+      await tenantApiFetch<{ ok: boolean }>(`/api/tenant-admin/products/${productId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
         category: formData.category,
         imageUrls: allImageUrls,
         featured: formData.featured,
+        }),
       });
       
       toast.success("Producto actualizado exitosamente");
@@ -312,5 +331,13 @@ export default function EditProductPage() {
         </Card>
       </form>
     </div>
+  );
+}
+
+export default function EditProductPage() {
+  return (
+    <ProtectedRoute>
+      <EditProductContent />
+    </ProtectedRoute>
   );
 }

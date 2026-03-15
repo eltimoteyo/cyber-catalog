@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { centralDb } from '@/lib/firebase';
+import { auth } from '@/lib/auth';
 import { TenantConfig } from '@/lib/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,34 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { Upload, Save, Palette, Globe, Hash, MessageCircle, Instagram, Facebook, Music2, Loader2, Image as ImageIcon, Plus, Trash2, X, Info } from 'lucide-react';
 import { initTenantFirebase } from '@/lib/firebase';
 import { uploadLogoImage, uploadBannerImage } from '@/lib/products';
+
+async function tenantApiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const token = await auth.currentUser?.getIdToken(true);
+
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  const headers = new Headers(options.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+
+  if (options.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Error en API tenant-admin');
+  }
+
+  return payload as T;
+}
 
 function SettingsContent() {
   const { user } = useAuth();
@@ -54,16 +81,15 @@ function SettingsContent() {
       }
 
       try {
-        console.log('Cargando tenant:', user.tenantId);
-        const tenantDoc = await getDoc(doc(centralDb, 'tenants', user.tenantId));
-        
-        if (!tenantDoc.exists()) {
+        const data = await tenantApiFetch<{ tenant: TenantConfig }>('/api/tenant-admin/settings');
+        const tenantData = data.tenant;
+
+        if (!tenantData) {
           setError(`No se encontró el tenant: ${user.tenantId}`);
           setLoadingTenant(false);
           return;
         }
 
-        const tenantData = { id: tenantDoc.id, ...tenantDoc.data() } as TenantConfig;
         console.log('Tenant encontrado:', tenantData);
         
         setTenant(tenantData);
@@ -158,8 +184,11 @@ function SettingsContent() {
         updateData.subdomain = subdomain;
         updateData.domain = subdomain ? `${subdomain}.${platformDomain}` : null;
       }
-      
-      await updateDoc(doc(centralDb, 'tenants', user.tenantId), updateData);
+
+      await tenantApiFetch<{ ok: boolean }>('/api/tenant-admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(updateData),
+      });
 
       toast.success('Configuración guardada exitosamente');
       

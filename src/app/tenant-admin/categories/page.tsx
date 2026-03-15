@@ -5,10 +5,8 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Edit3, Coffee, Flower, Gift, Heart, Sparkles, Package, ShoppingBag, Star, Cake, Wine, Palette, Home, Shirt, Watch, Footprints, Baby, Music, Book, Camera, Gamepad2, Dumbbell, Pizza, IceCream } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { initTenantFirebase, centralDb } from "@/lib/firebase";
-import { collection, getDocs, getDoc, doc as firestoreDoc } from "firebase/firestore";
-import { createCategory, updateCategory, deleteCategory } from "@/lib/products";
-import { Category, TenantConfig } from "@/lib/types";
+import { auth } from "@/lib/auth";
+import { Category } from "@/lib/types";
 import { toast } from "sonner";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import * as LucideIcons from "lucide-react";
@@ -47,6 +45,34 @@ const renderIcon = (iconName?: string, size = 24) => {
   return IconComponent ? <IconComponent size={size} /> : <Sparkles size={size} />;
 };
 
+async function tenantApiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const token = await auth.currentUser?.getIdToken(true);
+
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  const headers = new Headers(options.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+
+  if (options.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Error en API tenant-admin');
+  }
+
+  return payload as T;
+}
+
 function CategoriesContent() {
   const { user } = useAuth();
   
@@ -57,7 +83,6 @@ function CategoriesContent() {
   const [newIcon, setNewIcon] = useState("Package");
   const [editingName, setEditingName] = useState("");
   const [editingIcon, setEditingIcon] = useState("Package");
-  const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -67,33 +92,12 @@ function CategoriesContent() {
   }, [user]);
 
   async function loadCategories() {
-    if (!user?.tenantId) return;
+    if (!user) return;
     
     setLoading(true);
     try {
-      // Obtener configuración del tenant
-      const tenantDoc = await getDoc(firestoreDoc(centralDb, 'tenants', user.tenantId));
-      if (!tenantDoc.exists()) {
-        toast.error("Tenant no encontrado");
-        return;
-      }
-      
-      const tenantData = { id: tenantDoc.id, ...tenantDoc.data() } as TenantConfig;
-      setTenant(tenantData);
-      
-      const { db } = initTenantFirebase(tenantData.id, tenantData.firebaseConfig);
-      const categoriesRef = collection(db, 'categories');
-      const snapshot = await getDocs(categoriesRef);
-      
-      console.log('Categories snapshot:', snapshot.size, 'docs');
-      
-      const cats = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Category[];
-      
-      console.log('Categories loaded:', cats);
-      setCategories(cats);
+      const data = await tenantApiFetch<{ categories: Category[] }>('/api/tenant-admin/categories');
+      setCategories(data.categories || []);
     } catch (error) {
       console.error("Error loading categories:", error);
       toast.error("Error al cargar categorías");
@@ -103,11 +107,17 @@ function CategoriesContent() {
   }
 
   async function handleCreate() {
-    if (!newCategory.trim() || !tenant) return;
+    if (!newCategory.trim()) return;
     
     try {
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
-      await createCategory(db, newCategory, categories.length, newIcon);
+      await tenantApiFetch<{ ok: boolean; id: string }>('/api/tenant-admin/categories', {
+        method: 'POST',
+        body: JSON.stringify({
+          label: newCategory,
+          icon: newIcon,
+          order: categories.length,
+        }),
+      });
       
       toast.success("Categoría creada");
       setNewCategory("");
@@ -121,12 +131,18 @@ function CategoriesContent() {
   }
 
   async function handleUpdate(categoryId: string) {
-    if (!editingName.trim() || !tenant) return;
+    if (!editingName.trim()) return;
     
     try {
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
       const category = categories.find(c => c.id === categoryId);
-      await updateCategory(db, categoryId, editingName, category?.order, editingIcon);
+      await tenantApiFetch<{ ok: boolean }>(`/api/tenant-admin/categories/${categoryId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          label: editingName,
+          icon: editingIcon,
+          order: category?.order || 0,
+        }),
+      });
       
       toast.success("Categoría actualizada");
       setEditingId(null);
@@ -140,11 +156,12 @@ function CategoriesContent() {
   }
 
   async function handleDelete(categoryId: string) {
-    if (!confirm("¿Estás seguro de eliminar esta categoría?") || !tenant) return;
+    if (!confirm("¿Estás seguro de eliminar esta categoría?")) return;
     
     try {
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
-      await deleteCategory(db, categoryId);
+      await tenantApiFetch<{ ok: boolean }>(`/api/tenant-admin/categories/${categoryId}`, {
+        method: 'DELETE',
+      });
       
       toast.success("Categoría eliminada");
       loadCategories();

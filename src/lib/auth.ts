@@ -45,6 +45,11 @@ export const loginWithEmail = async (email: string, password: string): Promise<U
 
 export const logout = async () => {
   try {
+    await fetch('/api/auth/session', {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
     await signOut(auth);
   } catch (error) {
     console.error('Error al cerrar sesión:', error);

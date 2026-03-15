@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Store } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginWithEmail } from "@/lib/auth";
+import { auth, loginWithEmail } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,7 +25,30 @@ export default function LoginPage() {
     try {
       const userData = await loginWithEmail(email, password);
       console.log("Usuario autenticado:", userData);
-      router.push("/tenant-admin");
+
+      if (userData.role === "admin") {
+        const idToken = await auth.currentUser?.getIdToken(true);
+
+        if (!idToken) {
+          throw new Error("No se pudo obtener token de sesión");
+        }
+
+        const sessionResponse = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idToken }),
+          credentials: "include",
+        });
+
+        if (!sessionResponse.ok) {
+          const sessionPayload = await sessionResponse.json().catch(() => ({}));
+          throw new Error(sessionPayload?.error || "No se pudo crear sesión segura");
+        }
+      }
+
+      router.push(userData.role === "admin" ? "/admin" : "/tenant-admin");
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión");
       console.error("Error en login:", err);

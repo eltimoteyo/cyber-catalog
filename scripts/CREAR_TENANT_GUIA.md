@@ -57,12 +57,12 @@ Tipo: map
 
 Campo: firebaseConfig
 Tipo: map
-  - apiKey: (string) AIzaSyAB2f4yzW_klDJrlNtnyVi387eEHSM_0r8
-  - authDomain: (string) cyber-catalog.firebaseapp.com
-  - projectId: (string) cyber-catalog
-  - storageBucket: (string) cyber-catalog.firebasestorage.app
-  - messagingSenderId: (string) 145571149256
-  - appId: (string) 1:145571149256:web:6583321f194b2c19323cfd
+  - apiKey: (string) REPLACE_WITH_VALUE
+  - authDomain: (string) REPLACE_WITH_VALUE
+  - projectId: (string) REPLACE_WITH_VALUE
+  - storageBucket: (string) REPLACE_WITH_VALUE
+  - messagingSenderId: (string) REPLACE_WITH_VALUE
+  - appId: (string) REPLACE_WITH_VALUE
 
 Campo: createdAt
 Tipo: timestamp
@@ -93,12 +93,12 @@ Valor: (fecha actual)
     "secondary": "346 100% 97%"
   },
   "firebaseConfig": {
-    "apiKey": "AIzaSyAB2f4yzW_klDJrlNtnyVi387eEHSM_0r8",
-    "authDomain": "cyber-catalog.firebaseapp.com",
-    "projectId": "cyber-catalog",
-    "storageBucket": "cyber-catalog.firebasestorage.app",
-    "messagingSenderId": "145571149256",
-    "appId": "1:145571149256:web:6583321f194b2c19323cfd"
+    "apiKey": "REPLACE_WITH_VALUE",
+    "authDomain": "REPLACE_WITH_VALUE",
+    "projectId": "REPLACE_WITH_VALUE",
+    "storageBucket": "REPLACE_WITH_VALUE",
+    "messagingSenderId": "REPLACE_WITH_VALUE",
+    "appId": "REPLACE_WITH_VALUE"
   }
 }
 ```

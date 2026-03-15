@@ -8,12 +8,12 @@ import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from 
 
 // Firebase Central
 const centralFirebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_API_KEY || "AIzaSyD-tq3p7Z8FMYoYKxVVCkISDqLDVkbRbVE",
-  authDomain: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_AUTH_DOMAIN || "cyber-catalog.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_PROJECT_ID || "cyber-catalog",
-  storageBucket: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_STORAGE_BUCKET || "cyber-catalog.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_MESSAGING_SENDER_ID || "816331534848",
-  appId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID || "1:816331534848:web:89d6e02ecc2c01e4a21b90",
+  apiKey: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(centralFirebaseConfig, 'central-update');
@@ -21,13 +21,13 @@ const db = getFirestore(app);
 
 // Configuración correcta de Bella Sorpresa
 const bellaSorpresaFirebaseConfig = {
-  apiKey: "AIzaSyAEDIXmFz7aLxEzQ4YemEb1eZp8ldKSm1w",
-  authDomain: "createam-5a670.firebaseapp.com",
-  projectId: "createam-5a670",
-  storageBucket: "createam-5a670.firebasestorage.app",
-  messagingSenderId: "904126614612",
-  appId: "1:904126614612:web:8b1254be947c722e8d31c1",
-  measurementId: "G-P3BD3PS8FL"
+  apiKey: process.env.BELLASORPRESA_FIREBASE_API_KEY,
+  authDomain: process.env.BELLASORPRESA_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.BELLASORPRESA_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.BELLASORPRESA_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.BELLASORPRESA_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.BELLASORPRESA_FIREBASE_APP_ID,
+  measurementId: process.env.BELLASORPRESA_FIREBASE_MEASUREMENT_ID,
 };
 
 async function updateBellaSorpresaTenant() {

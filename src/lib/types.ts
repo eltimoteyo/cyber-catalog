@@ -85,3 +85,20 @@ export interface TenantRegistration {
   wantsDomain: boolean;
   customDomain?: string;
 }
+
+export interface TenantAuditActor {
+  uid: string | null;
+  email: string | null;
+  role?: string | null;
+}
+
+export interface TenantAuditLog {
+  id: string;
+  tenantId: string | null;
+  action: string | null;
+  resource: string | null;
+  resourceId: string | null;
+  actor: TenantAuditActor;
+  metadata?: Record<string, unknown>;
+  createdAt: string | null;
+}

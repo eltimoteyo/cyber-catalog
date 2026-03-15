@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TenantConfig, TenantStatus } from "@/lib/types";
-import { getAllTenants, updateTenantStatus, updateTenantConfig } from "@/lib/tenants";
+import { TenantAuditLog, TenantConfig, TenantStatus } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Store, 
   Check, 
@@ -15,26 +13,80 @@ import {
   Settings, 
   Pause,
   ExternalLink,
-  ArrowLeft 
+  ArrowLeft,
+  RefreshCcw,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+
+type TenantApiItem = Omit<TenantConfig, "createdAt" | "updatedAt" | "approvedAt"> & {
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  approvedAt?: string | null;
+};
+
+async function adminApiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers);
+
+  if (options.body) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload?.error || "Error en API de administración");
+  }
+
+  return payload as T;
+}
+
+function normalizeTenantDates(tenant: TenantApiItem): TenantConfig {
+  return {
+    ...tenant,
+    createdAt: tenant.createdAt ? new Date(tenant.createdAt) : new Date(),
+    updatedAt: tenant.updatedAt ? new Date(tenant.updatedAt) : new Date(),
+    approvedAt: tenant.approvedAt ? new Date(tenant.approvedAt) : undefined,
+  } as TenantConfig;
+}
 
 export default function AdminDashboard() {
   const [tenants, setTenants] = useState<TenantConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<TenantStatus | "all">("all");
   const [selectedTenant, setSelectedTenant] = useState<TenantConfig | null>(null);
+  const [auditLogs, setAuditLogs] = useState<TenantAuditLog[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditTenantId, setAuditTenantId] = useState("");
+  const [auditActionPreset, setAuditActionPreset] = useState("");
+  const [auditActionCustom, setAuditActionCustom] = useState("");
+  const [auditFrom, setAuditFrom] = useState("");
+  const [auditTo, setAuditTo] = useState("");
+  const [auditLimit, setAuditLimit] = useState("100");
+  const [auditHasMore, setAuditHasMore] = useState(false);
+  const [auditNextCursor, setAuditNextCursor] = useState<string | null>(null);
 
   useEffect(() => {
     loadTenants();
   }, [filter]);
 
+  useEffect(() => {
+    loadAuditLogs();
+  }, []);
+
   async function loadTenants() {
     setLoading(true);
     try {
-      const data = await getAllTenants(filter === "all" ? undefined : filter);
-      setTenants(data);
+      const statusParam = filter === "all" ? "all" : filter;
+      const data = await adminApiFetch<{ tenants: TenantApiItem[] }>(`/api/admin/tenants?status=${statusParam}`);
+      setTenants((data.tenants || []).map(normalizeTenantDates));
     } catch (error) {
       console.error("Error loading tenants:", error);
       toast.error("Error al cargar tenants");
@@ -45,23 +97,120 @@ export default function AdminDashboard() {
 
   async function handleStatusChange(tenantId: string, newStatus: TenantStatus) {
     try {
-      await updateTenantStatus(tenantId, newStatus, "admin");
+      await adminApiFetch<{ ok: boolean }>(`/api/admin/tenants/${tenantId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
       toast.success(`Tenant ${newStatus === 'active' ? 'aprobado' : 'actualizado'}`);
       loadTenants();
-    } catch (error) {
+    } catch {
       toast.error("Error al actualizar estado");
     }
   }
 
   async function handleConfigUpdate(tenantId: string, config: Partial<TenantConfig>) {
     try {
-      await updateTenantConfig(tenantId, config);
+      await adminApiFetch<{ ok: boolean }>(`/api/admin/tenants/${tenantId}/config`, {
+        method: "PATCH",
+        body: JSON.stringify(config),
+      });
       toast.success("Configuración actualizada");
       setSelectedTenant(null);
       loadTenants();
-    } catch (error) {
+    } catch {
       toast.error("Error al actualizar configuración");
     }
+  }
+
+  async function loadAuditLogs(options?: { append?: boolean; cursor?: string | null }) {
+    setAuditLoading(true);
+
+    try {
+      const resolvedAction =
+        auditActionPreset === '__custom__' ? auditActionCustom.trim() : auditActionPreset.trim();
+
+      const params = new URLSearchParams();
+      if (auditTenantId.trim()) params.set('tenantId', auditTenantId.trim());
+      if (resolvedAction) params.set('action', resolvedAction);
+      if (auditFrom) params.set('from', new Date(auditFrom).toISOString());
+      if (auditTo) params.set('to', new Date(auditTo).toISOString());
+
+      const parsedLimit = Number(auditLimit);
+      if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+        params.set('limit', String(parsedLimit));
+      }
+
+      if (options?.cursor) {
+        params.set('cursor', options.cursor);
+      }
+
+      const query = params.toString();
+      const url = query ? `/api/admin/audit?${query}` : '/api/admin/audit';
+
+      const data = await adminApiFetch<{ logs: TenantAuditLog[]; hasMore?: boolean; nextCursor?: string | null }>(url);
+      const logs = data.logs || [];
+
+      setAuditLogs((prev) => (options?.append ? [...prev, ...logs] : logs));
+      setAuditHasMore(Boolean(data.hasMore));
+      setAuditNextCursor(data.nextCursor || null);
+    } catch (error) {
+      console.error('Error loading audit logs:', error);
+      toast.error('Error al cargar auditoria');
+    } finally {
+      setAuditLoading(false);
+    }
+  }
+
+  function exportAuditCsv() {
+    if (auditLogs.length === 0) {
+      toast.error('No hay datos para exportar');
+      return;
+    }
+
+    const headers = [
+      'id',
+      'createdAt',
+      'tenantId',
+      'action',
+      'resource',
+      'resourceId',
+      'actorUid',
+      'actorEmail',
+      'actorRole',
+      'metadata',
+    ];
+
+    const escapeCsv = (value: unknown) => {
+      const raw = value == null ? '' : String(value);
+      return `"${raw.replace(/"/g, '""')}"`;
+    };
+
+    const rows = auditLogs.map((log) => [
+      log.id,
+      log.createdAt || '',
+      log.tenantId || '',
+      log.action || '',
+      log.resource || '',
+      log.resourceId || '',
+      log.actor?.uid || '',
+      log.actor?.email || '',
+      log.actor?.role || '',
+      JSON.stringify(log.metadata || {}),
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escapeCsv).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `audit-logs-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
   }
 
   const pendingCount = tenants.filter(t => t.status === 'pending').length;
@@ -159,6 +308,153 @@ export default function AdminDashboard() {
                     onConfigure={() => setSelectedTenant(tenant)}
                   />
                 ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <CardTitle className="inline-flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Auditoria de Tenants
+                </CardTitle>
+                <CardDescription>
+                  Eventos de create/update/delete en productos, categorias y settings.
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => loadAuditLogs()} disabled={auditLoading}>
+                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  Recargar
+                </Button>
+                <Button variant="outline" onClick={exportAuditCsv}>
+                  Exportar CSV
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+              <div className="space-y-1">
+                <Label>Tenant ID</Label>
+                <Input
+                  value={auditTenantId}
+                  onChange={(e) => setAuditTenantId(e.target.value)}
+                  placeholder="ej: bellasorpresa"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Accion</Label>
+                <select
+                  value={auditActionPreset}
+                  onChange={(e) => setAuditActionPreset(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Todas</option>
+                  <option value="product.created">product.created</option>
+                  <option value="product.updated">product.updated</option>
+                  <option value="product.deleted">product.deleted</option>
+                  <option value="category.created">category.created</option>
+                  <option value="category.updated">category.updated</option>
+                  <option value="category.deleted">category.deleted</option>
+                  <option value="tenant.settings.updated">tenant.settings.updated</option>
+                  <option value="__custom__">Otra accion...</option>
+                </select>
+                {auditActionPreset === '__custom__' && (
+                  <Input
+                    value={auditActionCustom}
+                    onChange={(e) => setAuditActionCustom(e.target.value)}
+                    placeholder="ej: custom.action"
+                  />
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label>Desde</Label>
+                <Input
+                  type="datetime-local"
+                  value={auditFrom}
+                  onChange={(e) => setAuditFrom(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Hasta</Label>
+                <Input
+                  type="datetime-local"
+                  value={auditTo}
+                  onChange={(e) => setAuditTo(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Limite</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={300}
+                  value={auditLimit}
+                  onChange={(e) => setAuditLimit(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mb-4 flex gap-2">
+              <Button onClick={() => loadAuditLogs()} disabled={auditLoading}>Aplicar filtros</Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAuditTenantId('');
+                  setAuditActionPreset('');
+                  setAuditActionCustom('');
+                  setAuditFrom('');
+                  setAuditTo('');
+                  setAuditLimit('100');
+                  setAuditHasMore(false);
+                  setAuditNextCursor(null);
+                }}
+              >
+                Limpiar
+              </Button>
+            </div>
+
+            {auditLoading ? (
+              <div className="text-center py-6">Cargando auditoria...</div>
+            ) : auditLogs.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">No hay eventos para los filtros actuales</div>
+            ) : (
+              <div className="space-y-3">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="border rounded-lg p-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="font-semibold">{log.action || 'unknown.action'}</span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-muted">
+                        tenant: {log.tenantId || 'n/a'}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-muted">
+                        recurso: {log.resource || 'n/a'}
+                      </span>
+                    </div>
+                    <div className="text-muted-foreground text-xs mb-2">
+                      actor: {log.actor?.email || log.actor?.uid || 'desconocido'}
+                      {log.createdAt ? ` | ${new Date(log.createdAt).toLocaleString()}` : ''}
+                    </div>
+                    <div className="text-xs bg-muted/40 rounded p-2 overflow-auto">
+                      <pre>{JSON.stringify(log.metadata || {}, null, 2)}</pre>
+                    </div>
+                  </div>
+                ))}
+                {auditHasMore && auditNextCursor && (
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => loadAuditLogs({ append: true, cursor: auditNextCursor })}
+                      disabled={auditLoading}
+                    >
+                      Cargar mas
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

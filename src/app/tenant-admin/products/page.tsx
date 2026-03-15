@@ -5,15 +5,41 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Pencil, Trash2, Search, MoreHorizontal, MousePointerClick } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MousePointerClick } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { initTenantFirebase } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, deleteDoc, doc, getDoc, doc as firestoreDoc } from "firebase/firestore";
-import { centralDb } from "@/lib/firebase";
-import { Product, TenantConfig } from "@/lib/types";
+import { auth } from "@/lib/auth";
+import { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import ProtectedRoute from "@/components/ProtectedRoute";
+
+async function tenantApiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const token = await auth.currentUser?.getIdToken(true);
+
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  const headers = new Headers(options.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+
+  if (options.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Error en API tenant-admin');
+  }
+
+  return payload as T;
+}
 
 function ProductsContent() {
   const router = useRouter();
@@ -22,7 +48,6 @@ function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [tenant, setTenant] = useState<TenantConfig | null>(null);
 
   useEffect(() => {
     if (user?.tenantId) {
@@ -35,31 +60,8 @@ function ProductsContent() {
     
     setLoading(true);
     try {
-      // Obtener configuración del tenant
-      const tenantDoc = await getDoc(firestoreDoc(centralDb, 'tenants', user.tenantId));
-      if (!tenantDoc.exists()) {
-        toast.error("Tenant no encontrado");
-        return;
-      }
-      
-      const tenantData = { id: tenantDoc.id, ...tenantDoc.data() } as TenantConfig;
-      setTenant(tenantData);
-      
-      // Inicializar Firebase del tenant y cargar productos
-      const { db } = initTenantFirebase(tenantData.id, tenantData.firebaseConfig);
-      
-      const productsRef = collection(db, 'products');
-      const q = query(productsRef, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      
-      const productsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate(),
-      })) as Product[];
-      
-      setProducts(productsData);
+      const data = await tenantApiFetch<{ products: Product[] }>('/api/tenant-admin/products');
+      setProducts((data.products || []) as Product[]);
     } catch (error) {
       console.error("Error loading products:", error);
       toast.error("Error al cargar productos");
@@ -70,11 +72,11 @@ function ProductsContent() {
 
   async function handleDelete(productId: string) {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
-    if (!tenant) return;
     
     try {
-      const { db } = initTenantFirebase(tenant.id, tenant.firebaseConfig);
-      await deleteDoc(doc(db, 'products', productId));
+      await tenantApiFetch<{ ok: boolean }>(`/api/tenant-admin/products/${productId}`, {
+        method: 'DELETE',
+      });
       
       toast.success("Producto eliminado");
       loadProducts();

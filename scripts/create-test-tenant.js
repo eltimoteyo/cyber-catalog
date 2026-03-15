@@ -3,12 +3,12 @@ const admin = require('firebase-admin');
 
 // Inicializar Firebase Admin con las credenciales
 const firebaseConfig = {
-  apiKey: "AIzaSyAB2f4yzW_klDJrlNtnyVi387eEHSM_0r8",
-  authDomain: "cyber-catalog.firebaseapp.com",
-  projectId: "cyber-catalog",
-  storageBucket: "cyber-catalog.firebasestorage.app",
-  messagingSenderId: "145571149256",
-  appId: "1:145571149256:web:6583321f194b2c19323cfd"
+  apiKey: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID,
 };
 
 // Para usar Firebase Admin, necesitarás una service account key
@@ -40,12 +40,12 @@ async function createTestTenant() {
       facebook: "facebook.com/bellasorpresa",
       // Firebase config del tenant (usa el mismo por ahora para pruebas)
       firebaseConfig: {
-        apiKey: "AIzaSyAB2f4yzW_klDJrlNtnyVi387eEHSM_0r8",
-        authDomain: "cyber-catalog.firebaseapp.com",
-        projectId: "cyber-catalog",
-        storageBucket: "cyber-catalog.firebasestorage.app",
-        messagingSenderId: "145571149256",
-        appId: "1:145571149256:web:6583321f194b2c19323cfd"
+        apiKey: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_CENTRAL_FIREBASE_APP_ID,
       },
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),

@@ -96,12 +96,12 @@ Te pedirá:
 
 **Datos para usar:**
 ```
-Firebase API Key: AIzaSyAB2f4yzW_klDJrlNtnyVi387eEHSM_0r8
-Firebase Auth Domain: cyber-catalog.firebaseapp.com
-Firebase Project ID: cyber-catalog
-Firebase Storage Bucket: cyber-catalog.firebasestorage.app
-Firebase Messaging Sender ID: 145571149256
-Firebase App ID: 1:145571149256:web:6583321f194b2c19323cfd
+Firebase API Key: REPLACE_WITH_VALUE
+Firebase Auth Domain: REPLACE_WITH_VALUE
+Firebase Project ID: REPLACE_WITH_VALUE
+Firebase Storage Bucket: REPLACE_WITH_VALUE
+Firebase Messaging Sender ID: REPLACE_WITH_VALUE
+Firebase App ID: REPLACE_WITH_VALUE
 Dominio de la plataforma: createam.cloud
 ```
 
